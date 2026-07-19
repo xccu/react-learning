@@ -1,0 +1,121 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  transition: box-shadow 0.2s;
+}
+
+.item:hover {
+  box-shadow: var(--shadow);
+}
+
+.itemHeader {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.itemDate {
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: 14px;
+}
+
+.itemProject {
+  color: var(--primary-color);
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.itemHours {
+  margin-left: auto;
+  font-weight: 700;
+  color: var(--primary-color);
+  font-size: 16px;
+}
+
+.itemBody {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.taskTypeBadge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  color: white;
+  font-size: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.itemDescription {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.itemActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.editBtn {
+  padding: 4px 12px;
+  background: transparent;
+  color: var(--edit-color);
+  border: 1px solid var(--edit-color);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.editBtn:hover {
+  background: var(--edit-color);
+  color: white;
+}
+
+.deleteBtn {
+  padding: 4px 12px;
+  background: transparent;
+  color: var(--danger-color);
+  border: 1px solid var(--danger-color);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.deleteBtn:hover {
+  background: var(--danger-color);
+  color: white;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text-secondary);
+}
+
+.emptyState p {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+}
+
+.emptyHint {
+  font-size: 14px !important;
+}
