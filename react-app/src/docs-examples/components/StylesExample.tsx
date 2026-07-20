@@ -1,16 +1,11 @@
+import CodeBlock from './CodeBlock'
+
 export default function StylesExample() {
-  return (
-    <div>
-      <h1>添加样式</h1>
-
-      <h2>className 示例</h2>
-      <pre className="code-block">{`<img className="avatar" />`}</pre>
-      <pre className="code-block">{`.avatar {
+  const classNameCode = `<img className="avatar" />`
+  const cssCode = `.avatar {
   border-radius: 50%;
-}`}</pre>
-
-      <h2>内联样式示例</h2>
-      <pre className="code-block">{`const user = {
+}`
+  const inlineStyleCode = `const user = {
   name: 'Hedy Lamarr',
   imageUrl: 'https://react.dev/images/docs/scientists/yXOvdOSs.jpg',
   imageSize: 90,
@@ -24,7 +19,18 @@ export default function StylesExample() {
     width: user.imageSize,
     height: user.imageSize
   }}
-/>`}</pre>
+/>`
+
+  return (
+    <div>
+      <h1>添加样式</h1>
+
+      <h2>className 示例</h2>
+      <CodeBlock code={classNameCode} label="jsx" />
+      <CodeBlock code={cssCode} label="css" />
+
+      <h2>内联样式示例</h2>
+      <CodeBlock code={inlineStyleCode} label="tsx" />
 
       <h2>运行效果</h2>
       <div className="example-output">

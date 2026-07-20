@@ -1,14 +1,11 @@
+import CodeBlock from './CodeBlock'
+
 function MyButton() {
   return <button>我是一个按钮</button>
 }
 
 export default function ComponentsExample() {
-  return (
-    <div>
-      <h1>组件创建与嵌套</h1>
-
-      <h2>示例代码</h2>
-      <pre className="code-block">{`function MyButton() {
+  const code = `function MyButton() {
   return (
     <button>我是一个按钮</button>
   );
@@ -21,7 +18,14 @@ export default function MyApp() {
       <MyButton />
     </div>
   );
-}`}</pre>
+}`
+
+  return (
+    <div>
+      <h1>组件创建与嵌套</h1>
+
+      <h2>示例代码</h2>
+      <CodeBlock code={code} label="tsx" />
 
       <h2>运行效果</h2>
       <div className="example-output">

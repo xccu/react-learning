@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import CodeBlock from './CodeBlock'
 
 function MyButton() {
   const [count, setCount] = useState(0)
@@ -14,13 +15,7 @@ function MyButton() {
   )
 }
 
-export default function StateExample() {
-  return (
-    <div>
-      <h1>State 管理</h1>
-
-      <h2>独立计数器</h2>
-      <pre className="code-block">{`function MyButton() {
+const independentCode = `function MyButton() {
   const [count, setCount] = useState(0);
 
   function handleClick() {
@@ -32,15 +27,9 @@ export default function StateExample() {
       点了 {count} 次
     </button>
   );
-}`}</pre>
-      <p>每个按钮维护自己的 count 状态：</p>
-      <div className="example-output">
-        <MyButton />
-        <MyButton />
-      </div>
+}`
 
-      <h2>共同更新的计数器（状态提升）</h2>
-      <pre className="code-block">{`export default function MyApp() {
+const sharedCode = `export default function MyApp() {
   const [count, setCount] = useState(0);
 
   function handleClick() {
@@ -62,7 +51,23 @@ function MyButton({ count, onClick }) {
       点了 {count} 次
     </button>
   );
-}`}</pre>
+}`
+
+export default function StateExample() {
+  return (
+    <div>
+      <h1>State 管理</h1>
+
+      <h2>独立计数器</h2>
+      <CodeBlock code={independentCode} label="tsx" />
+      <p>每个按钮维护自己的 count 状态：</p>
+      <div className="example-output">
+        <MyButton />
+        <MyButton />
+      </div>
+
+      <h2>共同更新的计数器（状态提升）</h2>
+      <CodeBlock code={sharedCode} label="tsx" />
       <p>两个按钮共享同一个 count：</p>
       <SharedCounter />
     </div>

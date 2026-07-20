@@ -1,3 +1,5 @@
+import CodeBlock from './CodeBlock'
+
 function MyButton() {
   function handleClick() {
     alert('You clicked me!')
@@ -10,13 +12,7 @@ function MyButton() {
   )
 }
 
-export default function EventsExample() {
-  return (
-    <div>
-      <h1>响应事件</h1>
-
-      <h2>示例代码</h2>
-      <pre className="code-block">{`function MyButton() {
+const code = `function MyButton() {
   function handleClick() {
     alert('You clicked me!');
   }
@@ -26,7 +22,15 @@ export default function EventsExample() {
       点我
     </button>
   );
-}`}</pre>
+}`
+
+export default function EventsExample() {
+  return (
+    <div>
+      <h1>响应事件</h1>
+
+      <h2>示例代码</h2>
+      <CodeBlock code={code} label="tsx" />
 
       <h2>运行效果</h2>
       <div className="example-output">

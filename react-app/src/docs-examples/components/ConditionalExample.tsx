@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import CodeBlock from './CodeBlock'
 
 function AdminPanel() {
   return <div style={{ padding: '12px', background: '#fff3cd', borderRadius: '4px' }}>🔧 管理面板</div>
@@ -11,28 +12,32 @@ function LoginForm() {
 export default function ConditionalExample() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
 
-  return (
-    <div>
-      <h1>条件渲染</h1>
-
-      <h2>if/else 方式</h2>
-      <pre className="code-block">{`let content;
+  const ifElseCode = `let content;
 if (isLoggedIn) {
   content = <AdminPanel />;
 } else {
   content = <LoginForm />;
 }
-return <div>{content}</div>;`}</pre>
-
-      <h2>三元运算符</h2>
-      <pre className="code-block">{`{isLoggedIn ? (
+return <div>{content}</div>;`
+  const ternaryCode = `{isLoggedIn ? (
   <AdminPanel />
 ) : (
   <LoginForm />
-)}`}</pre>
+)}`
+  const logicalAndCode = `{isLoggedIn && <AdminPanel />}`
+
+  return (
+    <div>
+      <h1>条件渲染</h1>
+
+      <h2>if/else 方式</h2>
+      <CodeBlock code={ifElseCode} label="tsx" />
+
+      <h2>三元运算符</h2>
+      <CodeBlock code={ternaryCode} label="tsx" />
 
       <h2>逻辑与运算符</h2>
-      <pre className="code-block">{`{isLoggedIn && <AdminPanel />}`}</pre>
+      <CodeBlock code={logicalAndCode} label="tsx" />
 
       <h2>运行效果</h2>
       <div className="example-output">

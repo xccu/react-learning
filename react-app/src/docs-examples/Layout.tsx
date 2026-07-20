@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import './styles/Layout.css'
+import './styles/CodeBlock.css'
 
 export default function Layout() {
   const location = useLocation()
