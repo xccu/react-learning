@@ -65,15 +65,9 @@ function App() {
                     </a>
                   </li>
                   <li>
-                    <Link to="/docs-examples" className="docs-examples-link">
-                      <img className="button-icon" src={reactLogo} alt="" />
-                      查看示例
-                    </Link>
-                  </li>
-                  <li>
                     <Link to="/timesheet" className="docs-examples-link">
                       <img className="button-icon" src={reactLogo} alt="" />
-                      工时填报
+                      Timesheet
                     </Link>
                   </li>
                 </ul>
@@ -88,7 +82,7 @@ function App() {
                   <li>
                     <Link to="/docs-examples" className="docs-examples-link">
                       <img className="button-icon" src={reactLogo} alt="" />
-                      查看示例
+                      View Examples
                     </Link>
                   </li>
                 </ul>

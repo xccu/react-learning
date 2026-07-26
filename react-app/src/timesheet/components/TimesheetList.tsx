@@ -1,20 +1,27 @@
+// 导入全局状态 Hook 和子组件
 import { useTimesheet } from '../TimesheetContext'
 import { StatusBadge } from './StatusBadge'
 import type { TimesheetItem, TimesheetStatus } from '../types'
 
+// 状态流转顺序数组
 const STATUS_ORDER: TimesheetStatus[] = ['pending', 'submitted', 'approved']
 
+// 工时记录列表组件
+// 使用 useTimesheet Hook 获取全局 records 数据，展示表格
 function TimesheetList() {
   const { records, deleteRecord, toggleStatus } = useTimesheet()
 
+  // 删除记录处理
   const handleDelete = (id: string) => {
     deleteRecord(id)
   }
 
+  // 切换状态处理
   const handleToggleStatus = (id: string) => {
     toggleStatus(id)
   }
 
+  // 空状态：无记录时显示提示
   if (records.length === 0) {
     return (
       <div
@@ -34,6 +41,7 @@ function TimesheetList() {
 
   return (
     <div style={{ overflowX: 'auto' }}>
+      {/* 表格展示所有工时记录 */}
       <table
         style={{
           width: '100%',
@@ -112,6 +120,7 @@ function TimesheetList() {
           </tr>
         </thead>
         <tbody>
+          {/* 使用 map 遍历 records 渲染每一行 */}
           {records.map((record) => (
             <TimesheetRow
               key={record.id}
@@ -126,13 +135,16 @@ function TimesheetList() {
   )
 }
 
+// 行组件的 props
 interface TimesheetRowProps {
   record: TimesheetItem
   onDelete: (id: string) => void
   onToggleStatus: (id: string) => void
 }
 
+// 工时记录行组件：内嵌在 TimesheetList 中，处理行级交互
 function TimesheetRow({ record, onDelete, onToggleStatus }: TimesheetRowProps) {
+  // 计算下一个状态标签，用于按钮 tooltip 提示
   const currentStatusIndex = STATUS_ORDER.indexOf(record.status)
   const nextStatusIndex = (currentStatusIndex + 1) % STATUS_ORDER.length
   const nextStatusLabel = STATUS_ORDER[nextStatusIndex]
@@ -143,6 +155,7 @@ function TimesheetRow({ record, onDelete, onToggleStatus }: TimesheetRowProps) {
         borderBottom: '1px solid #f0f0f0',
         transition: 'background-color 0.15s',
       }}
+      // 鼠标悬停高亮效果
       onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#fafafa')}
       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
     >
@@ -169,6 +182,7 @@ function TimesheetRow({ record, onDelete, onToggleStatus }: TimesheetRowProps) {
           whiteSpace: 'nowrap',
         }}
       >
+        {/* 切换状态按钮：点击后循环切换 pending -> submitted -> approved */}
         <button
           onClick={() => onToggleStatus(record.id)}
           style={{
@@ -185,6 +199,7 @@ function TimesheetRow({ record, onDelete, onToggleStatus }: TimesheetRowProps) {
         >
           切换状态
         </button>
+        {/* 删除按钮 */}
         <button
           onClick={() => onDelete(record.id)}
           style={{

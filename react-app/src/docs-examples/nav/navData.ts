@@ -35,6 +35,7 @@ export const navSections: NavSection[] = [
     title: '高级概念',
     items: [
       { path: 'hooks', label: '使用 Hook' },
+      { path: 'hook-comparison', label: 'Hook 效果对比' },
       { path: 'sharing-data', label: '组件间数据共享' },
     ],
   },

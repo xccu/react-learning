@@ -8,6 +8,7 @@ import ListsExample from '../components/ListsExample'
 import EventsExample from '../components/EventsExample'
 import StateExample from '../components/StateExample'
 import HooksExample from '../components/HooksExample'
+import HookComparisonExample from '../components/HookComparisonExample'
 import SharingDataExample from '../components/SharingDataExample'
 
 export function DocsRoutes() {
@@ -21,6 +22,7 @@ export function DocsRoutes() {
     { path: 'events', element: <EventsExample /> },
     { path: 'state', element: <StateExample /> },
     { path: 'hooks', element: <HooksExample /> },
+    { path: 'hook-comparison', element: <HookComparisonExample /> },
     { path: 'sharing-data', element: <SharingDataExample /> },
   ])
 }
