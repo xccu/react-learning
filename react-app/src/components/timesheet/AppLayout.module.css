@@ -1,0 +1,61 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 240px;
+  background: #1a1a2e;
+  color: #fff;
+  flexShrink: 0;
+}
+
+.sidebarLogo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 20px;
+  borderBottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.logoIcon {
+  font-size: 24px;
+}
+
+.logoText {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.navList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  color: #a0a0b0;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+
+.navLinkActive {
+  background: rgba(99, 102, 241, 0.3);
+  color: #fff;
+  borderLeft: 3px solid #6366f1;
+}
+
+.navIcon {
+  font-size: 16px;
+}
+
+.main {
+  flex: 1;
+  padding: 24px;
+  background: #f8f9fa;
+  overflow: auto;
+}

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { TimeEntryProvider } from './context/TimeEntryContext'
-import AppLayout from './components/AppLayout'
+import AppLayout from './components/timesheet/AppLayout'
 import TimeSheetPage from './pages/TimeSheetPage'
 import { Layout, DocsRoutes } from './docs-examples'
 

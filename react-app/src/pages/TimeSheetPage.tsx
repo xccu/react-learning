@@ -1,18 +1,22 @@
 import { useState } from 'react'
 import { useTimeEntries } from '../context/TimeEntryContext'
-import Header from '../components/Header'
-import TimeEntryForm from '../components/TimeEntryForm'
-import TimeEntryList from '../components/TimeEntryList'
-import Stats from '../components/Stats'
-import type { TimeEntry } from '../api/mockApi'
+import Header from '../components/timesheet/Header'
+import TimeEntryForm from '../components/timesheet/TimeEntryForm'
+import TimeEntryList from '../components/timesheet/TimeEntryList'
+import Stats from '../components/timesheet/Stats'
+// 【TypeScript 类型导入】从 types 目录导入 TimeEntry 类型
+import type { TimeEntry } from '../types/timeEntry'
 
 // 内部组件：包含工时填报的所有逻辑
 function TimeSheetPage() {
+  // 从 Context 获取全局数据和操作方法
   const { entries, addEntry, updateEntry, deleteEntry } = useTimeEntries()
+  // 【TypeScript 联合类型】TimeEntry | null 表示可以是 TimeEntry 对象或 null
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null)
 
   // 处理表单提交（新增或编辑）
   const handleSubmit = async (
+    // 【TypeScript Omit 工具类型】Omit<TimeEntry, 'id' | 'createdAt'> 表示传入数据不包含 id 和 createdAt
     entry: Omit<TimeEntry, 'id' | 'createdAt'>
   ) => {
     if (editingEntry) {
@@ -40,7 +44,8 @@ function TimeSheetPage() {
     await deleteEntry(id)
   }
 
-  // 计算总工时
+  // 使用 reduce 遍历 entries 数组，将每条记录的 hours 累加得到总工时
+  // 【JavaScript Array.prototype.reduce()】reduce 遍历数组，将每个元素累加到 sum 中，初始值为 0
   const totalHours = entries.reduce((sum, entry) => sum + entry.hours, 0)
 
   return (
