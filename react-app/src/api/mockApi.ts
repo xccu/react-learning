@@ -1,6 +1,7 @@
 // 工时记录的数据类型
-// 【TypeScript 类型导出】不定义新类型，仅从 types/timeEntry.ts 重新导出供外部使用
-export type { TimeEntry, ApprovalStatus } from '../types/timeEntry'
+// 【TypeScript 类型导出】仅从 types/timeEntry.ts 导入并重新导出供外部使用
+import type { TimeEntry, ApprovalStatus } from '../types/timeEntry'
+export type { TimeEntry, ApprovalStatus }
 
 // 内存中初始化模拟数据数组（包含 3 条示例记录）
 let entries: TimeEntry[] = [

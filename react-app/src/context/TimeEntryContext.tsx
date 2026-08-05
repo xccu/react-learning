@@ -1,5 +1,6 @@
 // 【TypeScript ReactNode 类型】ReactNode 表示任何可以渲染的内容（JSX、字符串、数字等）
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
+import type { ReactNode } from 'react'
 import type { TimeEntry } from '../api/mockApi'
 import { getEntries, addEntry as apiAdd, updateEntry as apiUpdate, deleteEntry as apiDelete } from '../api/mockApi'
 

@@ -5,6 +5,8 @@ interface TimeEntryItemProps {
   entry: TimeEntry
   onEdit: () => void
   onDelete: () => void
+  // 【TypeScript 可选回调】onViewDetail 可选，存在时才渲染「详情」按钮
+  onViewDetail?: () => void
 }
 
 // 【TypeScript Record 泛型】Record<ApprovalStatus, React.CSSProperties> 表示键为审批状态、值为样式对象的映射
@@ -14,7 +16,7 @@ const statusColors: Record<ApprovalStatus, React.CSSProperties> = {
   '已驳回': { background: '#fee2e2', color: '#dc2626' },
 }
 
-function TimeEntryItem({ entry, onEdit, onDelete }: TimeEntryItemProps) {
+function TimeEntryItem({ entry, onEdit, onDelete, onViewDetail }: TimeEntryItemProps) {
   // 格式化时间
   const formatDate = (iso: string) => {
     // 【JavaScript Date 构造函数】new Date(iso) 将 ISO 时间字符串转换为 Date 对象
@@ -46,6 +48,11 @@ function TimeEntryItem({ entry, onEdit, onDelete }: TimeEntryItemProps) {
         <span className={styles.itemTime}>{formatDate(entry.createdAt)}</span>
       </div>
       <div className={styles.itemActions}>
+        {onViewDetail && (
+          <button onClick={onViewDetail} className={styles.detailBtn}>
+            详情
+          </button>
+        )}
         <button onClick={onEdit} className={styles.editBtn}>
           编辑
         </button>

@@ -6,9 +6,10 @@ interface TimeEntryListProps {
   entries: TimeEntry[]
   onEdit: (entry: TimeEntry) => void
   onDelete: (id: string) => void
+  onViewDetail?: (entry: TimeEntry) => void
 }
 
-function TimeEntryList({ entries, onEdit, onDelete }: TimeEntryListProps) {
+function TimeEntryList({ entries, onEdit, onDelete, onViewDetail }: TimeEntryListProps) {
   // 条件渲染：无记录时显示空状态
   if (entries.length === 0) {
     return <p className={styles.empty}>暂无工时记录</p>
@@ -23,6 +24,7 @@ function TimeEntryList({ entries, onEdit, onDelete }: TimeEntryListProps) {
           entry={entry}
           onEdit={() => onEdit(entry)}
           onDelete={() => onDelete(entry.id)}
+          onViewDetail={onViewDetail ? () => onViewDetail(entry) : undefined}
         />
       ))}
     </div>

@@ -1,39 +1,5 @@
-import { useState, useEffect, useContext, useRef, createContext } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import CodeBlock from './CodeBlock'
-
-const ThemeContext = createContext('light')
-
-const code = `import { useState, useEffect, useContext, useRef } from 'react';
-
-const ThemeContext = createContext('light');
-
-function HookComparison() {
-  // useState: 状态变化 → 触发重渲染 → UI 更新
-  const [count, setCount] = useState(0);
-
-  // useEffect: 依赖变化 → 执行副作用 → 与外部同步
-  useEffect(() => {
-    console.log('count 变为:', count);
-  }, [count]);
-
-  // useContext: 读取祖先组件的共享值
-  const theme = useContext(ThemeContext);
-
-  // useRef: 持有可变值 → 不触发重渲染 → UI 不变
-  const renderCountRef = useRef(0);
-  renderCountRef.current += 1;
-
-  return (
-    <div className={theme}>
-      <p>count: {count}</p>
-      <p>theme: {theme}</p>
-      <p>渲染次数: {renderCountRef.current}</p>
-      <button onClick={() => setCount(c => c + 1)}>
-        点击（count +1，触发 useEffect 和重渲染）
-      </button>
-    </div>
-  );
-}`
 
 const useStateCode = `// useState: 管理组件内部状态，变化时触发重渲染
 const [count, setCount] = useState(0);
@@ -54,14 +20,9 @@ renderCountRef.current += 1;  // 值变了，但 UI 不变`
 
 export default function HookComparisonExample() {
   const [count, setCount] = useState(0)
-  const [mounted, setMounted] = useState(false)
   const [theme, setTheme] = useState('light')
   const renderCountRef = useRef(0)
   const [effectLog, setEffectLog] = useState<string[]>([])
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   useEffect(() => {
     const msg = `count 变为: ${count}`

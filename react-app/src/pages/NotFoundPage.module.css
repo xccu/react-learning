@@ -1,0 +1,24 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #f8f9fa;
+}
+
+.code {
+  margin: 0;
+  font-size: 64px;
+  color: #6366f1;
+}
+
+.message {
+  color: #666;
+}
+
+.homeLink {
+  color: #6366f1;
+  text-decoration: none;
+}

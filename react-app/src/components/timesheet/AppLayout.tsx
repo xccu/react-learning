@@ -1,22 +1,21 @@
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { logout } from '../../utils/auth'
 import styles from './AppLayout.module.css'
 
-// 【TypeScript interface】定义导航项的数据结构
-interface NavItem {
-  key: string
-  label: string
-  icon: string
-}
+// 路由化主布局：NavLink 高亮 + Outlet 渲染子路由 + 退出登录
+function AppLayout() {
+  const navigate = useNavigate()
 
-// 【TypeScript React.ComponentType】React.ComponentType 表示任意 React 组件类型
-interface AppLayoutProps {
-  activeNav: string
-  setActiveNav: (key: string) => void
-  // 【TypeScript Record 泛型】Record<string, React.ComponentType> 表示键为字符串、值为组件类型的映射
-  navPages: Record<string, React.ComponentType>
-  navItems: NavItem[]
-}
+  // 退出登录：清除登录态并跳转登录页
+  const handleLogout = () => {
+    logout()
+    navigate('/login', { replace: true })
+  }
 
-function AppLayout({ activeNav, setActiveNav, navPages, navItems }: AppLayoutProps) {
+  // 【JavaScript 模板字符串】根据 NavLink 激活状态拼接高亮类名
+  const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+    `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`
+
   return (
     <div className={styles.layout}>
       <nav className={styles.sidebar}>
@@ -24,35 +23,30 @@ function AppLayout({ activeNav, setActiveNav, navPages, navItems }: AppLayoutPro
           <span className={styles.logoIcon}>⚛️</span>
           <span className={styles.logoText}>React App</span>
         </div>
+
         <ul className={styles.navList}>
-          {/* 【JavaScript Array.prototype.map()】遍历导航项，生成导航链接列表 */}
-          {navItems.map((item) => (
-            <li key={item.key}>
-              <a
-                href="#"
-                onClick={(e) => {
-                  // 【JavaScript Event.preventDefault()】阻止链接默认跳转行为
-                  e.preventDefault()
-                  setActiveNav(item.key)
-                }}
-                // 【JavaScript 模板字符串】拼接基础样式和激活状态的样式类名
-                className={`${styles.navLink} ${activeNav === item.key ? styles.navLinkActive : ''}`}
-              >
-                <span className={styles.navIcon}>{item.icon}</span>
-                <span>{item.label}</span>
-              </a>
-            </li>
-          ))}
+          {/* end 确保「工时列表」仅在根路径 / 时高亮 */}
+          <li>
+            <NavLink to="/" end className={navLinkClass}>
+              <span className={styles.navIcon}>📋</span>
+              <span>工时列表</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/timesheet" className={navLinkClass}>
+              <span className={styles.navIcon}>🕐</span>
+              <span>工时填报</span>
+            </NavLink>
+          </li>
         </ul>
+
+        <button onClick={handleLogout} className={styles.logoutBtn}>
+          退出登录
+        </button>
       </nav>
 
       <main className={styles.main}>
-        {/* 【JavaScript 条件渲染】navPages[activeNav] 根据当前激活的导航项获取对应的页面组件 */}
-        {/* 【JavaScript 立即执行函数 IIFE】(() => { ... })() 在渲染时执行并返回 JSX 元素 */}
-        {navPages[activeNav] && (() => {
-          const Page = navPages[activeNav]
-          return <Page />
-        })()}
+        <Outlet />
       </main>
     </div>
   )
