@@ -1,3 +1,4 @@
+// useParams：读取 URL 动态参数定位要编辑的记录；useNavigate：提交成功后编程式跳转
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useTimeEntries } from '../context/TimeEntryContext'
 import TimeEntryForm from '../components/timesheet/TimeEntryForm'
@@ -26,9 +27,10 @@ function TimeEntryEditPage() {
     )
   }
 
-  // 提交修改：调用 updateEntry 后返回原页面
+  // 提交修改：调用 updateEntry 后返回列表页
   const handleSubmit = async (data: Omit<TimeEntry, 'id' | 'createdAt'>) => {
     await updateEntry(entry.id, data)
+    // 编程式导航：await 异步流程结束后跳转，Link 无法表达这种时机
     navigate('/timesheet')
   }
 

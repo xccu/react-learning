@@ -51,7 +51,7 @@ function TimeSheetPage() {
   return (
     <>
       {/* Header 放在页面顶部，横跨整个宽度 */}
-      <Header />
+      <Header title="工时填报" />
 
       {/* 在 AppLayout 的右侧内容区渲染 TimeEntryForm、TimeEntryList、Stats 组件 */}
       <TimeEntryForm onSubmit={handleSubmit} initialData={editingEntry} onCancel={editingEntry ? handleCancel : undefined} />

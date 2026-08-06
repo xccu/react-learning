@@ -4,6 +4,7 @@ import styles from '../components/timesheet/TimeEntryForm.module.css'
 
 // 详情页：只读镜像 TimeEntryForm 的字段布局
 function TimeEntryDetailPage() {
+  // useParams：读取 URL 动态参数，path 中的 :id 对应返回的 { id }
   const { id } = useParams()
   const { entries, loading } = useTimeEntries()
 
@@ -20,6 +21,7 @@ function TimeEntryDetailPage() {
     return (
       <div>
         <p>未找到该工时记录</p>
+        {/* Link：声明式导航，渲染为 <a> 标签但不会整页刷新 */}
         <Link to="/">返回列表</Link>
       </div>
     )
@@ -67,6 +69,7 @@ function TimeEntryDetailPage() {
       </div>
 
       <div className={styles.buttonGroup}>
+        {/* 模板字符串拼接当前记录的 id，跳转编辑页 */}
         <Link to={`/timesheet/${entry.id}/edit`} className={styles.submitBtn} style={{ textDecoration: 'none' }}>
           编辑
         </Link>

@@ -1,12 +1,14 @@
 # React 工时填报应用（第1周：路由与页面）— 技术栈详解
 
 > 本文按照从易到难的顺序，结合第 1 周「路由与页面结构」改造后的真实代码，逐一讲解登录页、列表页、详情页涉及的 React Router 与相关知识点。每个知识点均参考 `学习资料/3 React生态与工程化/` 的编写格式，包含定义、示例、使用效果和注意事项，文末附「第 1 周需求与技术栈对照检查」。
+>
+> **当前项目版本：** React `19.2.7`、React Router 使用 `react-router-dom@^7.18.1`（React Router v7，声明式模式）。v7 已合并 `react-router` 与 `react-router-dom`，本教程采用 v7 兼容的 `BrowserRouter + Routes + Route` 声明式写法，v6 语法可无缝迁移。各版本差异详见 `学习资料/3 React生态与工程化/3.1 React Router.md` 的「版本差异」章节。
+>
+> **前置准备（本项目已完成）：** `react-router-dom@^7.18.1` 已在脚手架阶段随 `package.json` 安装，无需重复执行；若在全新项目复现，安装命令为 `npm install react-router-dom`（详见 `3.1 React Router.md` 的「前置准备」章节）。
 
 ---
 
 ## 一、页面与组件依赖关系图
-
-<div style="background:#fff;padding:20px;border-radius:8px;display:inline-block;width:100%">
 
 ```mermaid
 graph TD
@@ -44,8 +46,6 @@ graph TD
     style EP fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#333
     style NF fill:#fce4ec,stroke:#c62828,stroke-width:2px,color:#333
 ```
-
-</div>
 
 ### 组件说明
 

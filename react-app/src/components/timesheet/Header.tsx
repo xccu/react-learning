@@ -1,10 +1,10 @@
 import styles from './Header.module.css'
 
-function Header() {
+function Header({ title = 'React Learning App' }: { title?: string }) {
   return (
     <header className={styles.header}>
       <span className={styles.headerIcon}>⚛️</span>
-      <h1 className={styles.headerTitle}>React Learning App</h1>
+      <h1 className={styles.headerTitle}>{title}</h1>
     </header>
   )
 }
