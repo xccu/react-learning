@@ -49,6 +49,13 @@ function AppLayout() {
               <span>工时填报</span>
             </NavLink>
           </li>
+          <li>
+            {/* end：精确匹配，仅当 URL 完全等于 /timesheet/create 时高亮「新增工时」 */}
+            <NavLink to="/timesheet/create" end className={navLinkClass}>
+              <span className={styles.navIcon}>➕</span>
+              <span>新增工时</span>
+            </NavLink>
+          </li>
         </ul>
 
         <div className={styles.userMenu}>

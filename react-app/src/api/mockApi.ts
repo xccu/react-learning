@@ -34,11 +34,36 @@ let entries: TimeEntry[] = [
   },
 ]
 
+// 查询条件类型：字段均可选，空字符串表示不限
+// 【TypeScript 可选属性】projectName / description / approvalStatus 均可选；approvalStatus 为空串表示不按状态过滤
+export interface TimeEntryQuery {
+  projectName?: string
+  description?: string
+  approvalStatus?: ApprovalStatus | ''
+}
+
 // 获取所有工时记录
 // 【TypeScript Promise 类型】返回 Promise<TimeEntry[]>，模拟异步 API 调用
 export async function getEntries(): Promise<TimeEntry[]> {
   // 【JavaScript Promise API】Promise.resolve() 将同步值包装为 Promise，模拟异步返回
   return Promise.resolve([...entries])
+}
+
+// 按查询条件过滤工时记录
+// 【TypeScript 可选链】?? 将 undefined/空串归一为空串，避免对空条件误过滤
+export async function queryEntries(query: TimeEntryQuery): Promise<TimeEntry[]> {
+  const projectName = query.projectName?.trim() ?? ''
+  const description = query.description?.trim() ?? ''
+  const approvalStatus = query.approvalStatus ?? ''
+
+  // 【JavaScript Array.prototype.filter()】逐个条件判断，全部命中才保留
+  const filtered = entries.filter((e) => {
+    if (projectName && !e.projectName.toLowerCase().includes(projectName.toLowerCase())) return false
+    if (description && !e.description.toLowerCase().includes(description.toLowerCase())) return false
+    if (approvalStatus && e.approvalStatus !== approvalStatus) return false
+    return true
+  })
+  return Promise.resolve([...filtered])
 }
 
 // 添加新记录

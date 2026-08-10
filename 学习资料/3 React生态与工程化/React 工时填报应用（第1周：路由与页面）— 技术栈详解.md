@@ -1,50 +1,66 @@
 # React 工时填报应用（第1周：路由与页面）— 技术栈详解
 
-> 本文按照从易到难的顺序，结合第 1 周「路由与页面结构」改造后的真实代码，逐一讲解登录页、列表页、详情页涉及的 React Router 与相关知识点。每个知识点均参考 `学习资料/3 React生态与工程化/` 的编写格式，包含定义、示例、使用效果和注意事项，文末附「第 1 周需求与技术栈对照检查」。
+> 本文按照从易到难的顺序，结合第 1 周「路由与页面结构」改造后的真实代码，逐一讲解登录页、列表页、详情页涉及的 React Router 与相关知识点。每个知识点均参考 `学习资料/3 React生态与工程化/` 的编写格式，包含定义、示例、使用效果和注意事项。与第 1 周 React Router 核心知识点关系不大或超纲的内容（受控表单、find、可选 Props、第 2 周提前实现）分别归入「三、其他重构」「四、知识进阶点」，文末附「第 1 周需求与技术栈对照检查」与「学习路径建议」。
 >
 > **当前项目版本：** React `19.2.7`、React Router 使用 `react-router-dom@^7.18.1`（React Router v7，声明式模式）。v7 已合并 `react-router` 与 `react-router-dom`，本教程采用 v7 兼容的 `BrowserRouter + Routes + Route` 声明式写法，v6 语法可无缝迁移。各版本差异详见 `学习资料/3 React生态与工程化/3.1 React Router.md` 的「版本差异」章节。
 >
 > **前置准备（本项目已完成）：** `react-router-dom@^7.18.1` 已在脚手架阶段随 `package.json` 安装，无需重复执行；若在全新项目复现，安装命令为 `npm install react-router-dom`（详见 `3.1 React Router.md` 的「前置准备」章节）。
+>
+> **当前项目范围说明：** 项目在第 1 周路由骨架的基础上，已用**现有技术栈**（无新增依赖）提前实现了部分第 2 周功能——独立新增页（`/timesheet/create`，复用 `TimeEntryForm`）与列表查询（`TimeEntryQueryForm` + mockApi `queryEntries`），详见「四、知识进阶点」。第 2 周的 Axios、React Hook Form 仍按计划未引入。
 
 ---
 
 ## 一、页面与组件依赖关系图
 
 ```mermaid
+%%{init: {"theme":"base","themeVariables":{"background":"#ffffff","primaryColor":"#ffffff","primaryTextColor":"#333333","primaryBorderColor":"#333333","lineColor":"#333333","textColor":"#333333"},"themeCSS":"svg { background-color: #ffffff !important; }"}}%%
 graph TD
-    App["App.tsx\n路由表 Routes"]
+    App["App\n路由表"]
 
-    App --> Login["/login\nLoginPage\n登录页（无守卫）"]
-    App --> Docs["/docs-examples\nLayout + DocsRoutes（保留）"]
-
+    App --> Login["LoginPage\n登录页"]
+    App --> Docs["Layout\n文档示例"]
     App --> RA["RequireAuth\n登录守卫"]
-    RA -. isLoggedIn .-> Auth["utils/auth.ts\nlocalStorage 登录态"]
-    RA --> AL["AppLayout\n主布局（NavLink + Outlet）"]
-    AL --> OL["Outlet\n子页面占位"]
+    RA -. isLoggedIn .-> Auth["auth\n登录态"]
+    RA --> AL["AppLayout\n主布局"]
+    AL --> OL["Outlet\n子页面出口"]
 
-    OL --> LP["/ index\nTimeEntryListPage\n列表页（默认）"]
-    OL --> DP["/timesheet/:id\nTimeEntryDetailPage\n详情页"]
-    OL --> EP["/timesheet/:id/edit\nTimeEntryEditPage\n编辑页"]
-    OL --> TSP["/timesheet\nTimeSheetPage\n原页面"]
+    OL --> LP["TimeEntryListPage\n列表页"]
+    OL --> DP["TimeEntryDetailPage\n详情页"]
+    OL --> EP["TimeEntryEditPage\n编辑页"]
+    OL --> CP["TimeEntryCreatePage\n新增页"]
+    OL --> TSP["TimeSheetPage\n原工时填报页"]
 
-    LP --> Stats["Stats\n总工时"]
-    LP --> TEL["TimeEntryList\n工时记录列表"]
+    LP --> TQF["TimeEntryQueryForm\n查询表单"]
+    LP --> Stats["Stats\n总工时统计"]
+    LP --> TEL["TimeEntryList\n记录列表"]
     TEL --> TEI["TimeEntryItem\n单条记录"]
 
-    LP --> Context["TimeEntryContext\nuseTimeEntries"]
+    LP --> Context["TimeEntryContext\n全局数据"]
     DP --> Context
     EP --> Context
+    CP --> Context
+    TQF -. queryEntries .-> Context
 
-    App --> NF["* 兜底\nNotFoundPage\n404"]
+    App --> NF["NotFoundPage\n404 兜底"]
 
     style App fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#333
-    style Login fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#333
+    style Auth fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#333
+    style Context fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#333
+    style Login fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#333
+    style Docs fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#333
     style RA fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#333
     style AL fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#333
-    style LP fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#333
-    style DP fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#333
-    style EP fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#333
-    style NF fill:#fce4ec,stroke:#c62828,stroke-width:2px,color:#333
+    style OL fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#333
+    style LP fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#333
+    style DP fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#333
+    style EP fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#333
+    style CP fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#333
+    style TSP fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#333
+    style NF fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#333
+    style TQF fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#333
+    style Stats fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#333
+    style TEL fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#333
+    style TEI fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#333
 ```
 
 ### 组件说明
@@ -55,9 +71,11 @@ graph TD
 | `LoginPage` | 登录表单 + 必填校验，成功后保存登录态并跳转来源页 | 受控组件、useState、useNavigate、useLocation、state |
 | `RequireAuth` | 未登录重定向到登录页并记录来源路径 | useLocation、Navigate、组件组合 |
 | `AppLayout` | 主布局：侧边导航 + 子页面出口 + 退出登录 | NavLink、Outlet、useNavigate、useCallback 类名回调 |
-| `TimeEntryListPage` | 默认列表页：总工时 + 记录列表 + 页面跳转 | 编程式导航、Props 回调、reduce |
-| `TimeEntryDetailPage` | 详情页：读取动态参数、find 单条记录、只读展示 | useParams、find、条件渲染、Link |
+| `TimeEntryListPage` | 默认列表页：查询表单 + 总工时 + 记录列表 + 页面跳转 | 受控查询、编程式导航、Props 回调、reduce |
+| `TimeEntryDetailPage` | 详情页：读取动态参数、find 单条记录、只读文本展示（独立样式模块） | useParams、find、条件渲染、Link |
 | `TimeEntryEditPage` | 编辑页：预填表单、更新后跳转 | useParams、Context、编程式导航 |
+| `TimeEntryCreatePage` | 新增页：复用 `TimeEntryForm` 新增模式，提交后回列表 | 组件复用、Context、编程式导航 |
+| `TimeEntryQueryForm` | 查询表单：按项目/内容/状态过滤 + 新增入口 | 受控组件、useState、Props 回调 |
 | `NotFoundPage` | 404 提示 + 返回入口 | Link、函数组件 |
 | `utils/auth.ts` | 登录态读写（localStorage） | localStorage API、模块化导出 |
 
@@ -71,6 +89,8 @@ URL 变化 → 路由匹配 → 渲染对应页面组件（嵌套布局内）
 RequireAuth → isLoggedIn() → 未登录重定向 /login（记录 from）
    ↓
 登录成功 → navigate(from ?? '/', { replace: true }) → 回到目标页
+   ↓
+列表页查询 → TimeEntryQueryForm → onQuery(query) → queryEntries(query) → 本地过滤结果
 ```
 
 ---
@@ -91,11 +111,14 @@ RequireAuth → isLoggedIn() → 未登录重定向 /login（记录 from）
 - [10. 路由守卫：RequireAuth + Navigate](#10-路由守卫requireauth--navigate)
 - [11. 登录状态持久化：localStorage](#11-登录状态持久化localstorage)
 - [12. 页面间状态传递：useLocation 的 state](#12-页面间状态传递uselocation-的-state)
-- [13. 受控组件与表单校验（登录页）](#13-受控组件与表单校验登录页)
-- [14. 详情页数据查找：find + loading](#14-详情页数据查找find--loading)
-- [15. 向后兼容的可选 Props](#15-向后兼容的可选-props)
-- [三、第 1 周需求与技术栈对照检查](#三第-1-周需求与技术栈对照检查)
-- [四、学习路径建议](#四学习路径建议)
+- [三、其他重构](#三其他重构)
+  - [1. 受控组件与表单校验（登录页）](#1-受控组件与表单校验登录页)
+  - [2. 详情页数据查找：find + loading](#2-详情页数据查找find--loading)
+  - [3. 向后兼容的可选 Props](#3-向后兼容的可选-props)
+- [四、知识进阶点](#四知识进阶点)
+  - [1. 列表查询与独立新增页（第 2 周功能提前实现）](#1-列表查询与独立新增页第-2-周功能提前实现)
+- [五、第 1 周需求与技术栈对照检查](#五第-1-周需求与技术栈对照检查)
+- [六、学习路径建议](#六学习路径建议)
 
 ---
 
@@ -119,7 +142,11 @@ createRoot(document.getElementById('root')!).render(
 )
 ```
 
-`BrowserRouter` 是路由环境的根容器，只有被它包裹的组件才能使用路由相关 Hook 与组件（`useNavigate`、`Link`、`NavLink` 等）。
+- **`import { BrowserRouter } from 'react-router-dom'`**：从 `react-router-dom` 导入路由环境组件，本教程采用 v7 兼容的声明式写法（v6 语法可无缝迁移）
+- **`createRoot(document.getElementById('root')!)`**：以 `index.html` 中的 `#root` 元素为挂载点创建 React 根容器；`!` 是**非空断言**，告知 TypeScript「该元素一定存在」（由 Vite 模板保证），省去判空
+- **`<StrictMode>`**：严格模式，开发环境下帮助暴露副作用等潜在问题，生产构建不产生任何影响
+- **`<BrowserRouter>`**：基于 HTML5 History API 的路由根容器，只有被它包裹的组件才能使用路由相关 Hook 与组件（`useNavigate`、`Link`、`NavLink` 等），是「URL 与页面组件映射」的环境基础
+- **`<App />`**：应用根组件，内部是整张路由表（`Routes` / `Route`，见第 2 节）
 
 #### 使用效果
 
@@ -158,6 +185,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
     }
   >
     <Route index element={<TimeEntryListPage />} />
+    <Route path="timesheet/create" element={<TimeEntryCreatePage />} />
     <Route path="timesheet/:id/edit" element={<TimeEntryEditPage />} />
     <Route path="timesheet/:id" element={<TimeEntryDetailPage />} />
     <Route path="timesheet" element={<TimeSheetPage />} />
@@ -170,6 +198,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 - **`element`**：该路径渲染的 JSX 元素
 - **`index`**：无路径的默认子路由（详见第 4 节）
 - **`*`**：通配符，匹配所有未定义路径（详见第 5 节）
+- **静态段优先**：`timesheet/create` 的静态段 `create` 优先级高于动态段 `:id`，访问 `/timesheet/create` 时命中新增页，不会被当作记录 id 匹配详情页
 
 #### 使用效果
 
@@ -297,13 +326,16 @@ function NotFoundPage() {
 ```tsx
 import { Link } from 'react-router-dom'
 
-<Link to={`/timesheet/${entry.id}/edit`} className={styles.submitBtn}>
+<Link to="edit" className={styles.submitBtn}>
   编辑
 </Link>
 <Link to="/" className={styles.cancelBtn}>
   返回列表
 </Link>
 ```
+
+- **相对导航**：详情页当前 URL 是 `/timesheet/:id`，「编辑」用 `to="edit"` 解析为 `/timesheet/:id/edit`——`edit` 是相对路径，**自动复用当前 URL 里已存在的 `:id` 动态参数**，无需再次拼接。
+- **静态路径**：`to="/"` 是绝对路径，跳到根列表页。
 
 #### 使用效果
 
@@ -312,7 +344,8 @@ import { Link } from 'react-router-dom'
 #### 注意事项
 
 - `Link` 是声明式导航：把「去哪」写在模板里，适合导航菜单、返回按钮等固定入口。
-- 需要携带动态参数时用模板字符串拼接 `to={`/timesheet/${entry.id}`}`。
+- 目标路径的 `:id` **已在当前 URL 中**时，用相对导航（`to="edit"`）复用，不要重新拼接 `/timesheet/${id}/edit`。
+- 只有当 `:id` 不在当前 URL（如列表页位于 `/`，id 来自点击的记录数据）时，才需要携带动态参数拼接，如 `to={`/timesheet/${entry.id}`}`。
 
 ---
 
@@ -375,16 +408,34 @@ const handleViewDetail = (entry: TimeEntry) => {
 const handleEdit = (entry: TimeEntry) => {
   navigate(`/timesheet/${entry.id}/edit`)
 }
+
+// 「新增工时」按钮：固定路径跳转到独立新增页
+const handleCreate = () => {
+  navigate('/timesheet/create')
+}
 ```
 
 #### 使用效果
 
-点击列表项上的「详情」按钮时，`navigate` 携带记录 id 跳转到对应详情页；「编辑」跳转到编辑页。跳转路径由点击的记录动态决定，这是 `Link` 在模板里不好表达的场景，适合编程式导航。
+点击列表项上的「详情」按钮时，`navigate` 携带记录 id 跳转到对应详情页；「编辑」跳转到编辑页。跳转路径由点击的记录动态决定，这是 `Link` 在模板里不好表达的场景，适合编程式导航。「新增工时」按钮去向固定（新增页），同样用 `navigate` 在按钮回调中触发。
 
 #### 注意事项
 
 - `navigate` 是函数引用，可传给子组件或放进异步流程（如 `await updateEntry(...)` 之后）。
 - 需要替换历史记录（不产生返回记录）时传第二个参数：`navigate('/login', { replace: true })`。
+
+#### 声明式 vs 编程式：如何选择
+
+| 对比维度 | 声明式导航（`Link` / `NavLink`） | 编程式导航（`useNavigate`） |
+|------|------|------|
+| 使用位置 | JSX 模板 | 事件处理、异步回调等 JS 逻辑 |
+| 触发时机 | 用户点击链接时 | 代码逻辑执行到某一行时（可与判断、异步操作组合） |
+| 适用场景 | 固定入口：侧边导航菜单、返回按钮、详情/编辑跳转链接 | 动态去向：点击某条记录跳对应详情/编辑、登录成功回跳来源页、退出登录 |
+| 携带参数 | `to="edit"` 相对路径自动复用当前 `:id`；`to="/"` 静态绝对路径 | `navigate(path, { state, replace })` 灵活传参（见第 12 节） |
+| 额外能力 | 渲染真实 `<a>` 标签，可右键、Ctrl+点击新标签页打开 | `navigate` 可放进 `await` 之后的异步流程，或传给子组件 |
+
+- **选择原则**：本应用里，「工时列表 / 工时填报 / 新增工时」导航菜单用 `NavLink`；详情页「返回列表」用 `Link to="/"`、「编辑」用相对导航 `Link to="edit"`（复用当前 `:id`）；而列表页的「详情 / 编辑」按钮、「新增工时」按钮、登录成功回跳、退出登录用 `navigate`——列表页位于 `/`，URL 中没有 `:id` 可复用，「详情/编辑」去向必须由点击记录的运行时数据决定，固定入口（如新增页）则用固定路径。
+- **核心区别**：声明式是「渲染时决定去向」，编程式是「逻辑执行时决定去向」——能用 `Link` 表达时优先 `Link`，模板无法静态写死去向时才用 `navigate`。
 
 ---
 
@@ -406,9 +457,17 @@ const entry = entries.find((e) => e.id === id)
 
 路由表 `timesheet/:id` 与 `timesheet/:id/edit` 共用同一个参数模式，分别渲染详情页与编辑页。
 
+同文件的 `Link` 示例——找到记录后跳转编辑页，`to="edit"` 是相对路径，自动复用当前 URL 里的 `:id`（详见第 6 节）：
+
+```tsx
+<Link to="edit" className={styles.submitBtn}>
+  编辑
+</Link>
+```
+
 #### 使用效果
 
-访问 `/timesheet/2` 时 `id === '2'`，从 `entries` 中 `find` 出对应记录并展示；列表页的「详情」按钮正是通过 `navigate('/timesheet/' + id)` 跳转而来。
+访问 `/timesheet/2` 时 `id === '2'`，从 `entries` 中 `find` 出对应记录并展示；列表页的「详情」按钮正是通过 `navigate('/timesheet/' + id)` 跳转而来，详情页的「编辑」则通过 `<Link to="edit">` 复用当前 `:id` 跳转。
 
 #### 注意事项
 
@@ -550,7 +609,11 @@ navigate(state?.from ?? '/', { replace: true })
 
 ---
 
-### 13. 受控组件与表单校验（登录页）
+## 三、其他重构
+
+> 以下内容与第 1 周 React Router 核心知识点关系不大，属于页面实现中的 React/JS 细节与向后兼容重构。为保持主章节聚焦「路由与页面」，统一归入本节；本节小章节独立编号（第 1-3 节），与「二、知识点详解」的编号互不干扰。
+
+### 1. 受控组件与表单校验（登录页）
 
 #### 定义
 
@@ -596,7 +659,7 @@ const handleSubmit = (e: FormEvent) => {
 
 ---
 
-### 14. 详情页数据查找：find + loading
+### 2. 详情页数据查找：find + loading
 
 #### 定义
 
@@ -631,11 +694,11 @@ if (!entry) {
 #### 注意事项
 
 - 三个条件分支（加载中 / 未找到 / 正常）按顺序判断，`find` 在 `loading` 之后执行，避免数据为空时误判。
-- 详情页只读展示，直接复用 `TimeEntryForm.module.css` 的布局类（`form`、`field`、`label`、`input`），用 `<div>` 替代输入框呈现值。
+- 详情页为只读展示，使用**独立样式模块** `TimeEntryDetailPage.module.css`（`page`、`label`、`value`），字段以「标签 + 纯文本」呈现，无输入框边框/背景、不可编辑；页面仅保留「编辑」「返回列表」按钮。详情页不依赖 `TimeEntryForm` 组件，故不复用其输入框样式。
 
 ---
 
-### 15. 向后兼容的可选 Props
+### 3. 向后兼容的可选 Props
 
 #### 定义
 
@@ -680,7 +743,85 @@ interface TimeEntryItemProps {
 
 ---
 
-## 三、第 1 周需求与技术栈对照检查
+## 四、知识进阶点
+
+> 本节收录超纲内容：第 2 周功能（列表查询与独立新增页）在当前技术栈内提前实现，无新增依赖。小章节独立编号，从 1 开始。
+
+### 1. 列表查询与独立新增页（第 2 周功能提前实现）
+
+> 以下功能属于第 2 周「数据请求与增删改查」范围。为避免引入新技术栈（Axios、React Hook Form），当前用既有技术（受控组件 + mockApi + Context）提前实现，界面层与数据层已按第 2 周的形态拆分，后续接真实接口时只需替换 mockApi。
+
+#### 列表查询 — `TimeEntryQueryForm.tsx` + `mockApi.ts`
+
+`TimeEntryQueryForm` 是展示型组件：三个受控输入（项目名称、工作内容、审批状态原生 `<select>`）+「查询 / 清空 / 新增工时」三个按钮，通过回调 `onQuery` / `onCreate` 交给父组件，自身不关心数据来源：
+
+```tsx
+const [projectName, setProjectName] = useState('')
+const [approvalStatus, setApprovalStatus] = useState<ApprovalStatus | ''>('')
+
+const handleSubmit = (e: FormEvent) => {
+  e.preventDefault()
+  onQuery({ projectName: projectName.trim(), description: description.trim(), approvalStatus })
+}
+```
+
+过滤逻辑集中在 `mockApi.ts` 的 `queryEntries(query)`：按包含关系（`toLowerCase().includes`）过滤内存数组并返回副本，不改动原数据：
+
+```ts
+export interface TimeEntryQuery {
+  projectName?: string
+  description?: string
+  approvalStatus?: ApprovalStatus | ''
+}
+
+export async function queryEntries(query: TimeEntryQuery): Promise<TimeEntry[]> {
+  const projectName = query.projectName?.trim() ?? ''
+  const description = query.description?.trim() ?? ''
+  const approvalStatus = query.approvalStatus ?? ''
+  const filtered = entries.filter((e) => {
+    if (projectName && !e.projectName.toLowerCase().includes(projectName.toLowerCase())) return false
+    if (description && !e.description.toLowerCase().includes(description.toLowerCase())) return false
+    if (approvalStatus && e.approvalStatus !== approvalStatus) return false
+    return true
+  })
+  return Promise.resolve([...filtered])
+}
+```
+
+`TimeEntryListPage` 把查询结果保存在**本地 state**（`filtered: TimeEntry[] | null`），`visibleEntries = filtered ?? entries`——无条件查询 / 清空时 `setFiltered(null)` 回退 Context 全量，避免查询污染全局数据源。
+
+#### 独立新增页 — `TimeEntryCreatePage.tsx`
+
+`/timesheet/create` 复用 `TimeEntryForm` 新增模式（不传 `initialData`），提交成功后编程式跳回列表页：
+
+```tsx
+const handleSubmit = async (data: Omit<TimeEntry, 'id' | 'createdAt'>) => {
+  await addEntry(data)
+  navigate('/')
+}
+
+return (
+  <div className={styles.page}>
+    <TimeEntryForm onSubmit={handleSubmit} />
+  </div>
+)
+```
+
+入口有两个：侧边导航「新增工时」`NavLink`（`to="/timesheet/create"` + `end` 精确匹配，避免 `/timesheet/create/...` 误高亮）与列表页查询按钮旁的「+ 新增工时」按钮。
+
+#### 使用效果
+
+列表可按项目名称 / 工作内容 / 审批状态组合过滤；「新增工时」按钮与侧边导航均可进入独立新增页，提交后回列表并出现新记录。
+
+#### 注意事项
+
+- 查询是**只读视图**：过滤结果保存在列表页本地，不写入共享 `entries`，清空后即可恢复全量。
+- 第 2 周接入 Axios 后，只需把 `mockApi.ts` 的 `queryEntries` 替换为真实接口，界面层无需改动。
+- 此部分属第 2 周范围提前实现；`TimeEntryQueryForm` 用原生 `<select>` 而非组件库，仍属现有技术栈。
+
+---
+
+## 五、第 1 周需求与技术栈对照检查
 
 ### 技术栈覆盖
 
@@ -695,13 +836,13 @@ interface TimeEntryItemProps {
 | 路由守卫 | 进入页面前条件拦截 | ✅ `RequireAuth` 包裹主布局 |
 | 登录状态持久化 | 刷新后仍保留 | ✅ `utils/auth.ts`（localStorage） |
 
-> **未引入（符合计划）：** 第 2 周的 Axios、React Hook Form 本周不引入；列表/详情数据仍来自 Context + mock（第 1 周允许静态占位，数据请求在第 2 周接入）。
+> **未引入（符合计划）：** 第 2 周的 Axios、React Hook Form 仍未引入；数据仍来自 Context + mock。第 2 周的「独立新增页 + 列表查询」已用现有技术栈提前实现（见「四、知识进阶点」），后续接真实接口时只需替换 mockApi。
 
 ### 第 1 周产出确认
 
 | 计划产出 | 完成情况 |
 |---------|---------|
-| ① 登录页：表单、校验，成功后保存登录状态并跳转列表页 | ✅ 见「第 13、11、12 节」 |
+| ① 登录页：表单、校验，成功后保存登录状态并跳转列表页 | ✅ 见「三、第 1 节」与「二、第 11-12 节」 |
 | ② 列表页路由：主页面路由配置完成，页面框架搭建 | ✅ index 默认路由 = `TimeEntryListPage` |
 | ③ 详情页路由：动态路由配置完成，能读取标识 | ✅ `/timesheet/:id` + `useParams` + `find` |
 | 带统一框架的主布局（导航高亮 + 退出登录） | ✅ `AppLayout`：`NavLink` 高亮 + 退出登录按钮 |
@@ -712,11 +853,13 @@ interface TimeEntryItemProps {
 
 - 登录为前端模拟（localStorage 布尔标志），真实用户/鉴权在第 5、6 周（用户管理、权限守卫）引入。
 - 列表/详情数据加载在第 2 周切换为真实接口；当前 `loading` 状态已为第 2 周的数据请求预留了界面状态。
+- 详情页已改为独立样式模块的只读文本展示（`TimeEntryDetailPage.module.css`），不再复用表单输入框样式。
+- 新增页与列表查询为第 2 周功能提前实现（无新技术栈），详见「四、知识进阶点」。
 - 原 `TimeSheetPage` 功能保持不变，以 `/timesheet` 子路由共存；`/docs-examples` 路由未改动。
 
 ---
 
-## 四、学习路径建议
+## 六、学习路径建议
 
 按照从易到难的顺序，建议按以下路径学习第 1 周代码：
 
@@ -725,6 +868,7 @@ interface TimeEntryItemProps {
 3. **三种导航方式**（第 6-8 节）→ `Link` / `NavLink` / `useNavigate` 各自场景
 4. **动态路由参数**（第 9 节）→ 单条记录定位
 5. **路由守卫与登录态**（第 10-12 节）→ 访问控制 + 持久化 + 页面间传参
-6. **页面内 React 细节**（第 13-15 节）→ 受控表单、find、可选 Props 向后兼容
+6. **页面内 React 细节**（「三、其他重构」第 1-3 节）→ 受控表单、find、可选 Props 向后兼容
+7. **提前实现的第 2 周功能**（「四、知识进阶点」第 1 节）→ 独立新增页与列表查询，理解「先 mock 后接真实接口」的形态
 
 每个知识点均可对照 `学习资料/3 React生态与工程化/3.1 React Router.md` 深入学习；第 2 周（Axios、React Hook Form）将在此页面骨架上接入真实数据请求。

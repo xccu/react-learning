@@ -1,8 +1,8 @@
 // 【TypeScript ReactNode 类型】ReactNode 表示任何可以渲染的内容（JSX、字符串、数字等）
 import { createContext, useContext, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
-import type { TimeEntry } from '../api/mockApi'
-import { getEntries, addEntry as apiAdd, updateEntry as apiUpdate, deleteEntry as apiDelete } from '../api/mockApi'
+import type { TimeEntry, TimeEntryQuery } from '../api/mockApi'
+import { getEntries, addEntry as apiAdd, updateEntry as apiUpdate, deleteEntry as apiDelete, queryEntries as apiQuery } from '../api/mockApi'
 
 // 定义上下文的数据结构
 // 【TypeScript interface】描述 Context 中传递的数据类型
@@ -13,6 +13,7 @@ interface TimeEntryContextType {
   addEntry: (entry: Omit<TimeEntry, 'id' | 'createdAt'>) => Promise<void>
   updateEntry: (id: string, updates: Partial<Omit<TimeEntry, 'id' | 'createdAt'>>) => Promise<void>
   deleteEntry: (id: string) => Promise<void>
+  queryEntries: (query: TimeEntryQuery) => Promise<TimeEntry[]>
 }
 
 // 创建 Context
@@ -60,7 +61,10 @@ function useTimeEntriesProvider() {
     setEntries((prev) => prev.filter((e) => e.id !== id))
   }
 
-  return { entries, loading, addEntry, updateEntry, deleteEntry }
+  // 按条件查询记录：只读视图，返回过滤结果但不修改全局 entries
+  const queryEntries = async (query: TimeEntryQuery) => apiQuery(query)
+
+  return { entries, loading, addEntry, updateEntry, deleteEntry, queryEntries }
 }
 
 // Provider 组件

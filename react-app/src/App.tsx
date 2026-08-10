@@ -9,6 +9,7 @@ import NotFoundPage from './pages/NotFoundPage'
 import TimeEntryListPage from './pages/TimeEntryListPage'
 import TimeEntryDetailPage from './pages/TimeEntryDetailPage'
 import TimeEntryEditPage from './pages/TimeEntryEditPage'
+import TimeEntryCreatePage from './pages/TimeEntryCreatePage'
 import TimeSheetPage from './pages/TimeSheetPage'
 import { Layout, DocsRoutes } from './docs-examples'
 
@@ -41,6 +42,8 @@ function App() {
         >
           {/* index：默认落地页，访问 / 时渲染工时列表 */}
           <Route index element={<TimeEntryListPage />} />
+          {/* 静态段 create 优先于动态段 :id 匹配；注册顺序靠前提升可读性 */}
+          <Route path="timesheet/create" element={<TimeEntryCreatePage />} />
           {/* 子路由 path 不以 / 开头，自动基于父路径 / 拼接；:id 为动态参数 */}
           <Route path="timesheet/:id/edit" element={<TimeEntryEditPage />} />
           <Route path="timesheet/:id" element={<TimeEntryDetailPage />} />

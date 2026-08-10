@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom'
 import { useTimeEntries } from '../context/TimeEntryContext'
-import styles from '../components/timesheet/TimeEntryForm.module.css'
+import styles from './TimeEntryDetailPage.module.css'
 
 // 详情页：只读镜像 TimeEntryForm 的字段布局
 function TimeEntryDetailPage() {
@@ -40,40 +40,40 @@ function TimeEntryDetailPage() {
   }
 
   return (
-    <div className={styles.form}>
-      <h2 className={styles.formTitle}>工时详情</h2>
+    <div className={styles.page}>
+      <h2 className={styles.title}>工时详情</h2>
 
       <div className={styles.field}>
         <label className={styles.label}>项目名称</label>
-        <div className={styles.input}>{entry.projectName}</div>
+        <div className={styles.value}>{entry.projectName}</div>
       </div>
 
       <div className={styles.field}>
         <label className={styles.label}>工作内容</label>
-        <div className={styles.input}>{entry.description}</div>
+        <div className={styles.value}>{entry.description}</div>
       </div>
 
       <div className={styles.field}>
         <label className={styles.label}>工时（小时）</label>
-        <div className={styles.input}>{entry.hours}</div>
+        <div className={styles.value}>{entry.hours}</div>
       </div>
 
       <div className={styles.field}>
         <label className={styles.label}>审批状态</label>
-        <div className={styles.input}>{entry.approvalStatus}</div>
+        <div className={styles.value}>{entry.approvalStatus}</div>
       </div>
 
       <div className={styles.field}>
         <label className={styles.label}>创建时间</label>
-        <div className={styles.input}>{formatDate(entry.createdAt)}</div>
+        <div className={styles.value}>{formatDate(entry.createdAt)}</div>
       </div>
 
       <div className={styles.buttonGroup}>
-        {/* 模板字符串拼接当前记录的 id，跳转编辑页 */}
-        <Link to={`/timesheet/${entry.id}/edit`} className={styles.submitBtn} style={{ textDecoration: 'none' }}>
+        {/* 相对导航：复用当前 URL 的 :id 动态参数，无需重新拼接 id */}
+        <Link to="edit" className={styles.submitBtn}>
           编辑
         </Link>
-        <Link to="/" className={styles.cancelBtn} style={{ textDecoration: 'none' }}>
+        <Link to="/" className={styles.cancelBtn}>
           返回列表
         </Link>
       </div>
