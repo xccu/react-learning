@@ -1,14 +1,23 @@
 // 【TypeScript ReactNode 类型】ReactNode 表示任何可以渲染的内容（JSX、字符串、数字等）
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import type { ReactNode } from 'react'
-import type { TimeEntry, TimeEntryQuery } from '../api/mockApi'
-import { getEntries, addEntry as apiAdd, updateEntry as apiUpdate, deleteEntry as apiDelete, queryEntries as apiQuery } from '../api/mockApi'
+import type { TimeEntry } from '../types/timeEntry'
+import type { TimeEntryQuery } from '../api/mockApi'
+import {
+  getEntries,
+  addEntry as apiAdd,
+  updateEntry as apiUpdate,
+  deleteEntry as apiDelete,
+  queryEntries as apiQuery,
+} from '../api/timeEntryApi'
 
 // 定义上下文的数据结构
 // 【TypeScript interface】描述 Context 中传递的数据类型
 interface TimeEntryContextType {
   entries: TimeEntry[]
   loading: boolean
+  error: string | null
+  retry: () => void
   // 【TypeScript 函数类型】定义回调函数的参数和返回值类型
   addEntry: (entry: Omit<TimeEntry, 'id' | 'createdAt'>) => Promise<void>
   updateEntry: (id: string, updates: Partial<Omit<TimeEntry, 'id' | 'createdAt'>>) => Promise<void>
@@ -21,24 +30,32 @@ interface TimeEntryContextType {
 // undefined 是初始值，实际值由 TimeEntryProvider 提供
 const TimeEntryContext = createContext<TimeEntryContextType | undefined>(undefined)
 
-// 自定义 Hook：封装 useState、useEffect 和 mock API 调用
+// 自定义 Hook：封装 useState、useEffect 和请求模块调用
 function useTimeEntriesProvider() {
   // 【TypeScript 泛型】useState<TimeEntry[]> 指定 entries 的类型为 TimeEntry 数组
   const [entries, setEntries] = useState<TimeEntry[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // 组件挂载时调用 getEntries 获取初始数据
+  // 初始加载：经请求模块拉取列表；失败时记录 error，供页面渲染「加载失败 + 重试」
+  const loadEntries = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await getEntries()
+      setEntries(data)
+    } catch (e) {
+      // 【JavaScript instanceof】判断错误对象类型，取可展示的错误信息
+      setError(e instanceof Error ? e.message : '加载失败')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  // 组件挂载时调用 loadEntries 获取初始数据
   useEffect(() => {
-    // 【JavaScript Promise API】.then() 处理异步成功，.catch() 处理异步失败
-    getEntries()
-      .then((data) => {
-        setEntries(data)
-        setLoading(false)
-      })
-      .catch(() => {
-        setLoading(false)
-      })
-  }, []) // 【React useEffect 依赖数组】空数组 [] 表示仅在组件首次挂载时执行一次（初始化），后续重新渲染不会重复触发
+    loadEntries()
+  }, [loadEntries]) // 【React useEffect 依赖数组】空数组 [] 表示仅在组件首次挂载时执行一次（初始化），后续重新渲染不会重复触发
 
   // 添加记录
   const addEntry = async (entry: Omit<TimeEntry, 'id' | 'createdAt'>) => {
@@ -64,7 +81,7 @@ function useTimeEntriesProvider() {
   // 按条件查询记录：只读视图，返回过滤结果但不修改全局 entries
   const queryEntries = async (query: TimeEntryQuery) => apiQuery(query)
 
-  return { entries, loading, addEntry, updateEntry, deleteEntry, queryEntries }
+  return { entries, loading, error, retry: loadEntries, addEntry, updateEntry, deleteEntry, queryEntries }
 }
 
 // Provider 组件

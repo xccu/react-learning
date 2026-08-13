@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client'
 // BrowserRouter：基于 HTML5 History API 的路由根容器，URL 形态与普通路径一致（如 /timesheet/1）
 import { BrowserRouter } from 'react-router-dom'
 import './index.css'
+// 引入即注册 mock 适配器：/api/* 请求落入内存数据源，接入真实后端时移除该导入即可
+import './api/mockAdapter'
 import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(

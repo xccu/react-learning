@@ -1,0 +1,20 @@
+.status {
+  text-align: center;
+  color: #999;
+  padding: 40px 0;
+}
+
+.errorText {
+  margin: 0 0 12px;
+  color: #e74c3c;
+}
+
+.retryBtn {
+  padding: 8px 20px;
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}

@@ -7,10 +7,11 @@ import TimeEntryList from '../components/timesheet/TimeEntryList'
 import TimeEntryQueryForm from '../components/timesheet/TimeEntryQueryForm'
 import type { TimeEntry } from '../types/timeEntry'
 import type { TimeEntryQuery } from '../api/mockApi'
+import styles from './TimeEntryListPage.module.css'
 
 // 列表页：复用 Stats 与 TimeEntryList，作为主布局的默认子页面
 function TimeEntryListPage() {
-  const { entries, deleteEntry, queryEntries } = useTimeEntries()
+  const { entries, loading, error, retry, deleteEntry, queryEntries } = useTimeEntries()
   // useNavigate：编程式导航，跳转路径由点击的记录动态决定，Link 在模板里不好表达
   const navigate = useNavigate()
   // 查询结果保存在本地 state：null 表示未过滤，显示 Context 全量
@@ -19,7 +20,7 @@ function TimeEntryListPage() {
   // 待展示记录：有查询结果用查询结果，否则用 Context 全量
   const visibleEntries = filtered ?? entries
 
-  // 提交查询：条件全空时恢复全部；否则调用 Context 的 queryEntries（内部走 mockApi 过滤）
+  // 提交查询：条件全空时恢复全部；否则调用 queryEntries（内部经请求模块过滤）
   const handleQuery = async (query: TimeEntryQuery) => {
     const { projectName, description, approvalStatus } = query
     if (!projectName && !description && !approvalStatus) {
@@ -44,9 +45,13 @@ function TimeEntryListPage() {
     navigate(`/timesheet/${entry.id}/edit`)
   }
 
-  // 删除按钮：调用 deleteEntry
+  // 删除按钮：二次确认后调用 deleteEntry，并同步本地查询结果
   const handleDelete = async (id: string) => {
+    // 【JavaScript window.confirm】原生确认框：取消返回 false 不删除
+    if (!window.confirm('确定删除该工时记录吗？')) return
     await deleteEntry(id)
+    // 处于查询过滤状态时同步移除已删除记录，保持可见列表一致
+    setFiltered((prev) => (prev ? prev.filter((e) => e.id !== id) : prev))
   }
 
   // 使用 reduce 遍历可见记录数组，累加总工时
@@ -56,13 +61,30 @@ function TimeEntryListPage() {
     <div>
       <Header title="工时列表" />
       <TimeEntryQueryForm onQuery={handleQuery} onCreate={handleCreate} />
-      <Stats totalHours={totalHours} />
-      <TimeEntryList
-        entries={visibleEntries}
-        onViewDetail={handleViewDetail}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+
+      {loading ? (
+        /* 加载中状态 */
+        <p className={styles.status}>加载中...</p>
+      ) : error ? (
+        /* 加载失败 + 重试入口 */
+        <div className={styles.status}>
+          <p className={styles.errorText}>加载失败：{error}</p>
+          <button type="button" onClick={retry} className={styles.retryBtn}>
+            重试
+          </button>
+        </div>
+      ) : (
+        <>
+          <Stats totalHours={totalHours} />
+          {/* 空数据时 TimeEntryList 内部渲染「暂无工时记录」 */}
+          <TimeEntryList
+            entries={visibleEntries}
+            onViewDetail={handleViewDetail}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        </>
+      )}
     </div>
   )
 }

@@ -49,6 +49,16 @@ export async function getEntries(): Promise<TimeEntry[]> {
   return Promise.resolve([...entries])
 }
 
+// 获取单条工时记录
+export async function getEntryById(id: string): Promise<TimeEntry> {
+  const entry = entries.find((e) => e.id === id)
+  if (!entry) {
+    // 【JavaScript Promise API】Promise.reject() 模拟异步错误返回
+    return Promise.reject(new Error('记录不存在'))
+  }
+  return Promise.resolve(entry)
+}
+
 // 按查询条件过滤工时记录
 // 【TypeScript 可选链】?? 将 undefined/空串归一为空串，避免对空条件误过滤
 export async function queryEntries(query: TimeEntryQuery): Promise<TimeEntry[]> {
