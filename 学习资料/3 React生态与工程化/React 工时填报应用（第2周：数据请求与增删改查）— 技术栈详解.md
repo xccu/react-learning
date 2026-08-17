@@ -12,8 +12,9 @@
 
 ## 一、组件与模块依赖关系图
 
+<div style="background:#fff;padding:20px;border-radius:8px;display:inline-block;width:100%">
+
 ```mermaid
-%%{init: {"theme":"base","themeVariables":{"background":"#ffffff","primaryColor":"#ffffff","primaryTextColor":"#333333","primaryBorderColor":"#333333","lineColor":"#333333","textColor":"#333333"},"themeCSS":"svg { background-color: #ffffff !important; }"}}%%
 graph TD
     App["App\n路由表（未改动）"]
 
@@ -70,6 +71,8 @@ graph TD
     style TEL fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#333
     style TEI fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#333
 ```
+
+</div>
 
 ### 组件与模块说明
 
@@ -406,16 +409,24 @@ interface TimeEntryFormValues {
   approvalStatus: ApprovalStatus
 }
 
+// 【React Hook Form useForm】创建表单实例后按需解构，所有成员作用于同一个实例：字段绑定 / 提交包装 / 受控桥接 / 数据写入 / 状态
 const {
-  register,
+  register, 
   handleSubmit,
-  control,
+  control, 
   reset,
-  formState: { errors, isSubmitting },
+  formState: { errors, isSubmitting }, 
 } = useForm<TimeEntryFormValues>({
   defaultValues: { projectName: '', description: '', hours: 1, approvalStatus: '待审批' },
 })
 ```
+
+- **`register`**：字段注册函数，把 `ref`、`name`、`onChange`、`onBlur` 一次性展开到原生输入框，非受控绑定字段（见下方「字段绑定」）
+- **`handleSubmit`**：提交处理包装器，先跑全部校验，通过后才调用回调，参数就是校验后的字段值对象
+- **`control`**：表单控制器引用，交给 `Controller` 桥接受控组件 `ApprovalStatusSelector`（见第 8 节）
+- **`reset`**：把数据写入表单；编辑预填用 `reset(initialData)`，提交后清空用 `reset()`（见第 9 节）
+- **`formState.errors`**：逐字段校验错误，按字段名取文案（如 `errors.hours.message`），各字段相互独立（见下方错误展示）
+- **`formState.isSubmitting`**：提交中 Promise 未完成时为 `true`，用于禁用按钮防止重复提交（见第 10 节）
 
 字段绑定（项目名称 / 工作内容 / 工时）：
 

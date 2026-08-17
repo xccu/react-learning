@@ -12,8 +12,9 @@
 
 ## 一、页面与组件依赖关系图
 
+<div style="background:#fff;padding:20px;border-radius:8px;display:inline-block;width:100%">
+
 ```mermaid
-%%{init: {"theme":"base","themeVariables":{"background":"#ffffff","primaryColor":"#ffffff","primaryTextColor":"#333333","primaryBorderColor":"#333333","lineColor":"#333333","textColor":"#333333"},"themeCSS":"svg { background-color: #ffffff !important; }"}}%%
 graph TD
     App["App\n路由表"]
 
@@ -62,6 +63,8 @@ graph TD
     style TEL fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#333
     style TEI fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#333
 ```
+</div>
+
 
 ### 组件说明
 

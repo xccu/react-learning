@@ -24,12 +24,13 @@ interface TimeEntryFormValues {
 }
 
 function TimeEntryForm({ onSubmit, initialData, onCancel }: TimeEntryFormProps) {
+  // 【React Hook Form useForm】创建表单实例后按需解构，所有成员作用于同一个实例：字段绑定 / 提交包装 / 受控桥接 / 数据写入 / 状态
   const {
-    register,
-    handleSubmit,
-    control,
-    reset,
-    formState: { errors, isSubmitting },
+    register, // 【register】字段注册：把 ref、name、onChange、onBlur 展开到原生输入框，非受控绑定字段
+    handleSubmit, // 【handleSubmit】提交包装：先跑全部校验，通过后才调用回调并传入校验后的字段值对象
+    control, // 【control】表单控制器：交给 Controller 桥接受控组件 ApprovalStatusSelector
+    reset, // 【reset】数据写入：编辑预填 reset(initialData)，提交后清空 reset()
+    formState: { errors, isSubmitting }, // 【formState】表单状态：errors 逐字段错误，isSubmitting 提交中
   } = useForm<TimeEntryFormValues>({
     defaultValues: {
       projectName: '',
