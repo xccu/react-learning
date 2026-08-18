@@ -5,7 +5,7 @@ Allow users to filter the time entry list by project name, work content, and app
 ## Requirements
 
 ### Requirement: 列表页查询表单
-系统 SHALL 在工时列表页提供查询表单，至少包含项目名称、工作内容、审批状态三类查询条件，并在提交时过滤列表。
+系统 SHALL 在工时列表页提供查询表单，至少包含项目名称、工作内容、审批状态三类查询条件，表单使用 React Hook Form 管理查询字段，并在提交时过滤列表。
 
 #### Scenario: 按项目名称查询
 - **WHEN** 用户输入项目名称关键字并点击「查询」
@@ -27,12 +27,12 @@ Allow users to filter the time entry list by project name, work content, and app
 - **WHEN** 用户不填写任何条件点击「查询」
 - **THEN** 列表显示全部记录
 
-### Requirement: 查询逻辑经 mockApi 实现
-系统 SHALL 将查询过滤逻辑实现于 mockApi 的查询函数中，返回过滤后的记录数组，列表页通过该函数获取查询结果。
+### Requirement: 查询逻辑经统一请求层实现
+系统 SHALL 将查询过滤逻辑实现于请求层的数据接口中，查询经统一请求层执行，返回过滤后的记录数组，列表页通过该接口获取查询结果。
 
 #### Scenario: 查询返回过滤结果
-- **WHEN** 列表页以一组查询条件调用 mockApi 查询函数
-- **THEN** 该函数返回满足条件的记录数组
+- **WHEN** 列表页以一组查询条件经请求层调用查询接口
+- **THEN** 该接口返回满足条件的记录数组
 
 ### Requirement: 清空查询恢复全部
 系统 SHALL 允许用户清空查询条件以恢复显示全部记录。
