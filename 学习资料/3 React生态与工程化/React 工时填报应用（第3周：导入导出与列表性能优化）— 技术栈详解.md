@@ -95,25 +95,99 @@ graph TD
 | `TimeEntryItem` | 单条记录：React.memo 缓存，props 未变时跳过渲染 | memo、浅比较 |
 | `TimeEntryQueryForm` | 查询表单（沿用第 2 周 RHF） | 查询条件变化重置分页 |
 
+### excel.ts 调用关系
+
+`src/utils/excel.ts` 是纯函数工具模块，**唯一调用方是 `src/pages/TimeEntryListPage.tsx`**。
+
+#### 导出
+
+操作栏按钮 + 回调（`TimeEntryListPage.tsx`）：
+
+```tsx
+import { exportToExcel, importFromExcel } from '../utils/excel'
+
+// 按钮
+<button onClick={handleExport} disabled={visibleEntries.length === 0}>
+  导出
+</button>
+
+// 回调
+const handleExport = useCallback(() => {
+  exportToExcel(visibleEntries)   // 传入当前可见记录，触发浏览器下载
+}, [visibleEntries])
+```
+
+`exportToExcel` 内部做了这些事（`src/utils/excel.ts`）：
+
+```ts
+export function exportToExcel(entries: TimeEntry[], filename: string = '工时记录.xlsx') {
+  // 1. 正向映射：英文键名 → 中文键名
+  const data = entries.map((entry) =>
+    Object.fromEntries(
+      Object.keys(headerMap).map((key) => [
+        headerMap[key as keyof TimeEntry], entry[key as keyof TimeEntry]
+      ])
+    )
+  )
+
+  // 2. 中文键名对象 → Excel 工作表
+  const worksheet = XLSX.utils.json_to_sheet(data)
+  const workbook = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(workbook, worksheet, '工时记录')
+
+  // 3. 工作表 → 二进制 buffer → Blob
+  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+  const blob = new Blob([excelBuffer], { type: '...' })
+
+  // 4. Blob → 临时 URL → <a> 点击下载 → 清理
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+```
+
+#### 导入
+
+操作栏按钮 + 回调（`TimeEntryListPage.tsx`）：
+
+```tsx
+// 按钮：label 包裹隐藏的 file input
+<label className={styles.toolbarBtn}>
+  {importing ? '导入中...' : '导入'}
+  <input type="file" accept=".xlsx" onChange={handleImport}
+         className={styles.hiddenInput} disabled={importing} />
+</label>
+
+// 回调
+const handleImport = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const file = event.target.files?.[0]
+  if (!file) return
+
+  setImporting(true)
+  try {
+    const result = await importFromExcel(file)   // 解析 xlsx，返回 { validRows, invalidCount }
+    if (result.validRows.length > 0) {
+      await addEntries(result.validRows)        // 批量写入
+      retry()                                   // 刷新列表
+    }
+    alert(`成功导入 ${result.validRows.length} 条`)
+  } catch (err) {
+    alert(err instanceof Error ? err.message : '导入失败')
+  } finally {
+    setImporting(false)
+    event.target.value = ''                     // 清空 input，允许重复选同一文件
+  }
+}, [retry])
+```
+
 ### 数据流方向
 
 ```
-导出流程：
-  用户点击「导出」 → handleExport(visibleEntries) → exportToExcel(entries)
-     |
-  xlsx.utils.json_to_sheet → xlsx.write → Blob → 临时链接 → 浏览器下载
-     |
-  清理链接（URL.revokeObjectURL）
-
-导入流程：
-  用户选择 .xlsx 文件 → <input onChange> → handleImport(event)
-     |
-  importFromExcel(file)：FileReader → ArrayBuffer → xlsx.read → sheet_to_json → 校验 → validRows
-     |
-  addEntries(validRows) → httpClient.post('/time-entries/batch') → mockApi.addEntries
-     |
-  retry() 刷新 Context → 列表刷新 + 重置分页
-
 列表渲染优化：
   TimeEntryListPage 重渲染 → handleEdit / handleDelete / onViewDetail（useCallback 稳定引用）
      |
@@ -146,6 +220,7 @@ graph TD
 - [四、知识进阶点](#四知识进阶点)
   - [1. xlsx 库体积与按需加载](#1-xlsx-库体积与按需加载)
   - [2. 性能优化原则：先确认再优化](#2-性能优化原则先确认再优化)
+  - [3. Blob：二进制数据的桥梁](#3-blob二进制数据的桥梁)
 - [五、第 3 周需求与技术栈对照检查](#五第-3-周需求与技术栈对照检查)
 - [六、学习路径建议](#六学习路径建议)
 
@@ -386,9 +461,64 @@ for (const row of rawData) {
 - **`reverseHeaderMap[chineseKey]`**：以中文列名为键查找对应的英文字段名
 - **排除 `id` 和 `createdAt`**：这两个字段由系统自动生成，用户不应从 Excel 导入覆盖
 
+#### 正向映射实例（导出）
+
+导出时，`exportToExcel` 接收的是 `TimeEntry[]`（英文键名对象），转为 Excel 需要的中文键名对象：
+
+```
+输入（TimeEntry 对象）：
+{
+  id: "1",
+  projectName: "React 学习",
+  description: "学习函数组件和 Hooks",
+  hours: 3,
+  approvalStatus: "已通过",
+  createdAt: "2026-08-18T10:00:00.000Z"
+}
+        ↓ 正向映射 headerMap[englishKey] → chineseKey
+输出（中文键名对象，传给 json_to_sheet）：
+{
+  "ID": "1",
+  "项目名称": "React 学习",
+  "工作内容": "学习函数组件和 Hooks",
+  "工时数": 3,
+  "审批状态": "已通过",
+  "创建时间": "2026-08-18T10:00:00.000Z"
+}
+        ↓ json_to_sheet 生成 Excel
+Excel 文件表头行：| ID | 项目名称 | 工作内容 | 工时数 | 审批状态 | 创建时间 |
+Excel 文件数据行：| 1  | React 学习 | 学习函数组件和 Hooks | 3 | 已通过 | 2026/8/18 18:00 |
+```
+
+#### 反向映射实例（导入）
+
+导入时，`sheet_to_json` 读出的是中文键名对象（与导出的表头对应），需要还原为 `TimeEntry` 的英文键名：
+
+```
+输入（sheet_to_json 输出，中文键名）：
+{
+  "项目名称": "React 学习",
+  "工作内容": "学习函数组件和 Hooks",
+  "工时数": 3,
+  "审批状态": "已通过"
+}
+        ↓ 反向映射 reverseHeaderMap[chineseKey] → englishKey
+输出（英文键名对象，可直接校验和写入）：
+{
+  projectName: "React 学习",
+  description: "学习函数组件和 Hooks",
+  hours: 3,
+  approvalStatus: "已通过"
+}
+        ↓ 校验 projectName 非空、hours > 0
+        ↓ 通过后传给 addEntries 写入
+```
+
+如果用户修改了 Excel 列名（如把「项目名称」改成「项目名」），`reverseHeaderMap["项目名"]` 返回 `undefined`，该字段被忽略，校验时 `projectName` 为空 → 计为非法行。
+
 #### 使用效果
 
-导出的 Excel 表头显示中文（「项目名称」「工作内容」等）；导入时用户使用相同格式的中文表头 Excel，程序自动将中文键名还原为英文字段名后校验和写入。
+导出的 Excel 表头显示中文（「项目名称」「工作内容」等）；导入时用户使用相同格式的中文表头 Excel，程序自动将中文键名还原为英文字段名后校验和写入。导出和导入互为逆操作。
 
 #### 注意事项
 
@@ -972,6 +1102,56 @@ React.memo 和 useCallback 是有效的性能优化手段，但过度使用会�
 - **仅对 TimeEntryItem 使用 memo**：它是列表中渲染次数最多的组件，props 稳定时收益最大
 - **不对 TimeEntryList 使用 memo**：它接收的 `entries` 数组在数据变化时引用必然改变，memo 意义不大
 - **useCallback 仅用于传递给 memo 子组件的回调**：内部使用的普通函数不需要 useCallback
+
+---
+
+### 3. Blob：二进制数据的桥梁
+
+#### 定义
+
+Blob（Binary Large Object，二进制大对象）是浏览器提供的 API，用于表示一段**原始二进制数据**的不可变对象。它的核心作用是把内存中的二进制数据（如 Excel 文件的 buffer）包装成一个「文件-like」对象，方便后续操作（如生成下载链接、上传、转换格式）。
+
+#### 创建方式
+
+```ts
+const blob = new Blob([excelBuffer], {
+  type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+})
+```
+
+- **第一个参数**：数组，放 `ArrayBuffer`、`Uint8Array`、字符串等二进制数据
+- **第二个参数**：MIME 类型，告诉浏览器这段数据是什么格式
+
+#### 在本项目中的作用
+
+`excel.ts` 导出流程中，Blob 是「内存数据 → 可下载文件」之间的桥梁：
+
+```
+xlsx.write() → Uint8Array（二进制 buffer，散装字节）
+    ↓
+new Blob([buffer], { type: '...' }) → Blob 对象（贴了 MIME 标签的包裹）
+    ↓
+URL.createObjectURL(blob) → 临时 URL（blob:http://localhost:5173/xxx，快递单号）
+    ↓
+<a href="url" download="工时记录.xlsx"> → 浏览器下载（收件人取件）
+    ↓
+URL.revokeObjectURL(url) → 释放内存（销毁快递单号）
+```
+
+#### 类比
+
+| 概念 | 类比 |
+|------|------|
+| `ArrayBuffer` / `Uint8Array` | 一堆散装的字节（原材料） |
+| `Blob` | 包装好的包裹（贴了 MIME 标签，知道里面是什么） |
+| `URL.createObjectURL` | 给包裹贴了一个临时快递单号（URL） |
+| `<a download>` | 收件人拿到单号就能取件（下载） |
+
+#### 注意事项
+
+- 没有 Blob，你就无法把一段内存中的二进制数据变成浏览器可下载的文件。
+- `URL.createObjectURL` 生成的临时 URL 占用内存，用完必须 `revokeObjectURL` 释放。
+- Blob 是不可变的——创建后内容不能修改，只能读取或转换为其他格式。
 
 ---
 
