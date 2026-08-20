@@ -40,3 +40,9 @@ export async function updateEntry(
 export async function deleteEntry(id: string): Promise<void> {
   await httpClient.delete(`/time-entries/${id}`)
 }
+
+// 批量添加工时记录
+export async function addEntries(entries: Omit<TimeEntry, 'id' | 'createdAt'>[]): Promise<TimeEntry[]> {
+  const { data } = await httpClient.post<TimeEntry[]>('/time-entries/batch', entries)
+  return data
+}

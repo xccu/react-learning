@@ -1,7 +1,7 @@
 // 【axios-mock-adapter】模拟后端 REST 接口，复用 mockApi 内存数据源
 import MockAdapter from 'axios-mock-adapter'
 import httpClient from './httpClient'
-import { getEntries, queryEntries, getEntryById, addEntry, updateEntry, deleteEntry } from './mockApi'
+import { getEntries, queryEntries, getEntryById, addEntry, addEntries, updateEntry, deleteEntry } from './mockApi'
 import type { TimeEntryQuery } from './mockApi'
 import type { TimeEntry } from '../types/timeEntry'
 
@@ -31,6 +31,12 @@ export function setupMockAdapter(): MockAdapter {
   mock.onPost('/time-entries').reply((config) => {
     const body = JSON.parse(config.data) as Omit<TimeEntry, 'id' | 'createdAt'>
     return addEntry(body).then((data) => [201, data])
+  })
+
+  // 批量新增
+  mock.onPost('/time-entries/batch').reply((config) => {
+    const body = JSON.parse(config.data) as Omit<TimeEntry, 'id' | 'createdAt'>[]
+    return addEntries(body).then((data) => [201, data])
   })
 
   // 编辑

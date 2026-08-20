@@ -18,3 +18,95 @@
   cursor: pointer;
   font-size: 14px;
 }
+
+.toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  padding: 12px 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.toolbarActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toolbarBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.toolbarBtn:hover {
+  background: #4f46e5;
+}
+
+.toolbarBtn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.toolbarBtn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0;
+  margin-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.paginationBtn {
+  padding: 8px 16px;
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.paginationBtn:hover {
+  background: #4f46e5;
+}
+
+.paginationBtn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.paginationInfo {
+  font-size: 14px;
+  color: #6b7280;
+}

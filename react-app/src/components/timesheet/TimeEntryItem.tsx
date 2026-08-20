@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { TimeEntry, ApprovalStatus } from '../../types/timeEntry'
 import styles from './TimeEntryItem.module.css'
 
@@ -64,4 +65,5 @@ function TimeEntryItem({ entry, onEdit, onDelete, onViewDetail }: TimeEntryItemP
   )
 }
 
-export default TimeEntryItem
+// 使用 React.memo 包裹组件，当 props 未变化时跳过重新渲染
+export default memo(TimeEntryItem)

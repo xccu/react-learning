@@ -111,3 +111,18 @@ export async function deleteEntry(id: string): Promise<void> {
   entries = entries.filter((e) => e.id !== id)
   return Promise.resolve()
 }
+
+// 批量添加工时记录
+export async function addEntries(newEntries: Omit<TimeEntry, 'id' | 'createdAt'>[]): Promise<TimeEntry[]> {
+  const addedEntries: TimeEntry[] = []
+  for (const entry of newEntries) {
+    const newEntry: TimeEntry = {
+      ...entry,
+      id: Date.now().toString() + Math.random().toString(36).slice(2, 9),
+      createdAt: new Date().toISOString(),
+    }
+    entries = [newEntry, ...entries]
+    addedEntries.push(newEntry)
+  }
+  return Promise.resolve(addedEntries)
+}
