@@ -95,95 +95,10 @@ graph TD
 | `TimeEntryItem` | 单条记录：React.memo 缓存，props 未变时跳过渲染 | memo、浅比较 |
 | `TimeEntryQueryForm` | 查询表单（沿用第 2 周 RHF） | 查询条件变化重置分页 |
 
-### excel.ts 调用关系
-
 `src/utils/excel.ts` 是纯函数工具模块，**唯一调用方是 `src/pages/TimeEntryListPage.tsx`**。
 
-#### 导出
-
-操作栏按钮 + 回调（`TimeEntryListPage.tsx`）：
-
-```tsx
-import { exportToExcel, importFromExcel } from '../utils/excel'
-
-// 按钮
-<button onClick={handleExport} disabled={visibleEntries.length === 0}>
-  导出
-</button>
-
-// 回调
-const handleExport = useCallback(() => {
-  exportToExcel(visibleEntries)   // 传入当前可见记录，触发浏览器下载
-}, [visibleEntries])
-```
-
-`exportToExcel` 内部做了这些事（`src/utils/excel.ts`）：
-
-```ts
-export function exportToExcel(entries: TimeEntry[], filename: string = '工时记录.xlsx') {
-  // 1. 正向映射：英文键名 → 中文键名
-  const data = entries.map((entry) =>
-    Object.fromEntries(
-      Object.keys(headerMap).map((key) => [
-        headerMap[key as keyof TimeEntry], entry[key as keyof TimeEntry]
-      ])
-    )
-  )
-
-  // 2. 中文键名对象 → Excel 工作表
-  const worksheet = XLSX.utils.json_to_sheet(data)
-  const workbook = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(workbook, worksheet, '工时记录')
-
-  // 3. 工作表 → 二进制 buffer → Blob
-  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
-  const blob = new Blob([excelBuffer], { type: '...' })
-
-  // 4. Blob → 临时 URL → <a> 点击下载 → 清理
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
-}
-```
-
-#### 导入
-
-操作栏按钮 + 回调（`TimeEntryListPage.tsx`）：
-
-```tsx
-// 按钮：label 包裹隐藏的 file input
-<label className={styles.toolbarBtn}>
-  {importing ? '导入中...' : '导入'}
-  <input type="file" accept=".xlsx" onChange={handleImport}
-         className={styles.hiddenInput} disabled={importing} />
-</label>
-
-// 回调
-const handleImport = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-  const file = event.target.files?.[0]
-  if (!file) return
-
-  setImporting(true)
-  try {
-    const result = await importFromExcel(file)   // 解析 xlsx，返回 { validRows, invalidCount }
-    if (result.validRows.length > 0) {
-      await addEntries(result.validRows)        // 批量写入
-      retry()                                   // 刷新列表
-    }
-    alert(`成功导入 ${result.validRows.length} 条`)
-  } catch (err) {
-    alert(err instanceof Error ? err.message : '导入失败')
-  } finally {
-    setImporting(false)
-    event.target.value = ''                     // 清空 input，允许重复选同一文件
-  }
-}, [retry])
-```
+- **导出**：`exportToExcel` 的调用关系详见「二、知识点详解 → xlsx（SheetJS）篇 → 2. 导出 Excel」
+- **导入**：`importFromExcel` 的调用关系详见「二、知识点详解 → xlsx（SheetJS）篇 → 3. 导入 Excel」
 
 ### 数据流方向
 
@@ -267,6 +182,22 @@ import type { TimeEntry } from '../types/timeEntry'
 
 导出流程分为三步：① 将对象数组转为工作表（`json_to_sheet`）；② 将工作表写入 workbook 并生成二进制 buffer（`write`）；③ 创建 Blob 对象并触发浏览器下载。
 
+#### 示例 — 调用方：`TimeEntryListPage.tsx` 的按钮与回调
+
+```tsx
+import { exportToExcel } from '../utils/excel'
+
+// 导出按钮
+<button onClick={handleExport} disabled={visibleEntries.length === 0}>
+  导出
+</button>
+
+// 导出回调
+const handleExport = useCallback(() => {
+  exportToExcel(visibleEntries)   // 传入当前可见记录，触发浏览器下载
+}, [visibleEntries])
+```
+
 #### 示例 — `src/utils/excel.ts` 的 `exportToExcel`
 
 ```ts
@@ -344,6 +275,40 @@ export function exportToExcel(entries: TimeEntry[], filename: string = '工时�
 #### 定义
 
 导入流程分为四步：① 用 FileReader 将用户选择的文件读取为 ArrayBuffer；② 用 `XLSX.read` 解析二进制数据为 workbook；③ 用 `sheet_to_json` 将工作表转为对象数组；④ 逐条校验数据并收集合法行。
+
+#### 示例 — 调用方：`TimeEntryListPage.tsx` 的按钮与回调
+
+```tsx
+import { importFromExcel } from '../utils/excel'
+
+// 按钮：label 包裹隐藏的 file input
+<label className={styles.toolbarBtn}>
+  {importing ? '导入中...' : '导入'}
+  <input type="file" accept=".xlsx" onChange={handleImport}
+         className={styles.hiddenInput} disabled={importing} />
+</label>
+
+// 回调
+const handleImport = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const file = event.target.files?.[0]
+  if (!file) return
+
+  setImporting(true)
+  try {
+    const result = await importFromExcel(file)   // 解析 xlsx，返回 { validRows, invalidCount }
+    if (result.validRows.length > 0) {
+      await addEntries(result.validRows)        // 批量写入
+      retry()                                   // 刷新列表
+    }
+    alert(`成功导入 ${result.validRows.length} 条`)
+  } catch (err) {
+    alert(err instanceof Error ? err.message : '导入失败')
+  } finally {
+    setImporting(false)
+    event.target.value = ''                     // 清空 input，允许重复选同一文件
+  }
+}, [retry])
+```
 
 #### 示例 — `src/utils/excel.ts` 的 `importFromExcel`
 
