@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { useDispatch } from 'react-redux'
+import type { AppDispatch } from '../store'
 import { getEntryById } from '../api/timeEntryApi'
+import { approveEntry, rejectEntry } from '../store/timesheetSlice'
 import type { TimeEntry } from '../types/timeEntry'
 import styles from './TimeEntryDetailPage.module.css'
 
@@ -11,6 +14,8 @@ function TimeEntryDetailPage() {
   const [entry, setEntry] = useState<TimeEntry | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const dispatch = useDispatch<AppDispatch>()
 
   // 挂载时经请求模块按 id 加载记录
   useEffect(() => {
@@ -54,6 +59,24 @@ function TimeEntryDetailPage() {
     })
   }
 
+  // 审批通过
+  const handleApprove = () => {
+    if (window.confirm('确定审批通过该记录吗？')) {
+      dispatch(approveEntry(entry.id))
+      // 更新本地状态
+      setEntry({ ...entry, approvalStatus: '已通过', rejectReason: undefined })
+    }
+  }
+
+  // 驳回
+  const handleReject = () => {
+    const reason = window.prompt('请输入驳回原因：')
+    if (reason) {
+      dispatch(rejectEntry({ id: entry.id, reason }))
+      setEntry({ ...entry, approvalStatus: '已驳回', rejectReason: reason })
+    }
+  }
+
   return (
     <div className={styles.page}>
       <h2 className={styles.title}>工时详情</h2>
@@ -78,17 +101,45 @@ function TimeEntryDetailPage() {
         <div className={styles.value}>{entry.approvalStatus}</div>
       </div>
 
+      {/* 已驳回时显示驳回原因 */}
+      {entry.approvalStatus === '已驳回' && entry.rejectReason && (
+        <div className={styles.field}>
+          <label className={styles.label}>驳回原因</label>
+          <div className={styles.value}>{entry.rejectReason}</div>
+        </div>
+      )}
+
       <div className={styles.field}>
         <label className={styles.label}>创建时间</label>
         <div className={styles.value}>{formatDate(entry.createdAt)}</div>
       </div>
 
       <div className={styles.buttonGroup}>
-        {/* 相对导航：复用当前 URL 的 :id 动态参数，无需重新拼接 id */}
-        <Link to="edit" className={styles.submitBtn}>
+        {/* 按状态显示审批操作按钮 */}
+        {entry.approvalStatus === '待审批' && (
+          <>
+            <button type="button" onClick={handleApprove} className={styles.submitBtn}>
+              审批通过
+            </button>
+            <button type="button" onClick={handleReject} className={styles.cancelBtn}>
+              驳回
+            </button>
+          </>
+        )}
+
+        {/* 已驳回时显示重填入口 */}
+        {entry.approvalStatus === '已驳回' && (
+          <Link to="edit" className={styles.submitBtn}>
+            重填
+          </Link>
+        )}
+
+        {/* 编辑按钮（所有状态都显示） */}
+        <Link to="edit" className={styles.editBtn}>
           编辑
         </Link>
-        <Link to="/" className={styles.cancelBtn}>
+
+        <Link to="/" className={styles.backLink}>
           返回列表
         </Link>
       </div>

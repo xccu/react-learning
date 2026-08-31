@@ -46,3 +46,21 @@ export async function addEntries(entries: Omit<TimeEntry, 'id' | 'createdAt'>[])
   const { data } = await httpClient.post<TimeEntry[]>('/time-entries/batch', entries)
   return data
 }
+
+// 提交审批
+export async function submitEntry(id: string): Promise<TimeEntry> {
+  const { data } = await httpClient.put<TimeEntry>(`/time-entries/${id}/submit`)
+  return data
+}
+
+// 审批通过
+export async function approveEntry(id: string): Promise<TimeEntry> {
+  const { data } = await httpClient.put<TimeEntry>(`/time-entries/${id}/approve`)
+  return data
+}
+
+// 驳回
+export async function rejectEntry(id: string, reason: string): Promise<TimeEntry> {
+  const { data } = await httpClient.put<TimeEntry>(`/time-entries/${id}/reject`, { reason })
+  return data
+}

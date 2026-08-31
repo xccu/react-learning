@@ -1,10 +1,24 @@
 .stats {
-  background: #6366f1;
-  color: #fff;
+  background: #fff;
+  color: #333;
   border-radius: 8px;
   padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.stats .ant-statistic {
   text-align: center;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .statsTitle {

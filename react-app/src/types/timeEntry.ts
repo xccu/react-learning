@@ -6,6 +6,7 @@ export type TimeEntry = {
   description: string
   hours: number
   approvalStatus: ApprovalStatus
+  rejectReason?: string
   createdAt: string
 }
 

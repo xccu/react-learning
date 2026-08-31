@@ -7,8 +7,8 @@ interface StatsProps {
 function Stats({ totalHours }: StatsProps) {
   return (
     <div className={styles.stats}>
-      <h3 className={styles.statsTitle}>总工时</h3>
-      <p className={styles.statsValue}>{totalHours} 小时</p>
+      <div className={styles.statsTitle}>总工时</div>
+      <div className={styles.statsValue}>{totalHours} 小时</div>
     </div>
   )
 }

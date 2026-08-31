@@ -1,7 +1,7 @@
 // 【axios-mock-adapter】模拟后端 REST 接口，复用 mockApi 内存数据源
 import MockAdapter from 'axios-mock-adapter'
 import httpClient from './httpClient'
-import { getEntries, queryEntries, getEntryById, addEntry, addEntries, updateEntry, deleteEntry } from './mockApi'
+import { getEntries, queryEntries, getEntryById, addEntry, addEntries, updateEntry, deleteEntry, submitEntry, approveEntry, rejectEntry } from './mockApi'
 import type { TimeEntryQuery } from './mockApi'
 import type { TimeEntry } from '../types/timeEntry'
 
@@ -53,6 +53,34 @@ export function setupMockAdapter(): MockAdapter {
   mock.onDelete(/\/time-entries\/.+$/).reply((config) => {
     const id = (config.url ?? '').split('/').pop() ?? ''
     return deleteEntry(id).then(() => [200, { success: true }])
+  })
+
+  // 提交审批
+  mock.onPut(/\/time-entries\/.+\/submit$/).reply((config) => {
+    const id = (config.url ?? '').split('/').pop() ?? ''
+    return submitEntry(id).then(
+      (data) => [200, data],
+      (err) => [404, { message: err instanceof Error ? err.message : '记录不存在' }]
+    )
+  })
+
+  // 审批通过
+  mock.onPut(/\/time-entries\/.+\/approve$/).reply((config) => {
+    const id = (config.url ?? '').split('/').pop() ?? ''
+    return approveEntry(id).then(
+      (data) => [200, data],
+      (err) => [404, { message: err instanceof Error ? err.message : '记录不存在' }]
+    )
+  })
+
+  // 驳回
+  mock.onPut(/\/time-entries\/.+\/reject$/).reply((config) => {
+    const id = (config.url ?? '').split('/').pop() ?? ''
+    const body = JSON.parse(config.data ?? '{}') as { reason: string }
+    return rejectEntry(id, body.reason).then(
+      (data) => [200, data],
+      (err) => [404, { message: err instanceof Error ? err.message : '记录不存在' }]
+    )
   })
 
   return mock

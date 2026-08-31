@@ -126,3 +126,36 @@ export async function addEntries(newEntries: Omit<TimeEntry, 'id' | 'createdAt'>
   }
   return Promise.resolve(addedEntries)
 }
+
+// 提交审批：将状态改为"待审批"
+export async function submitEntry(id: string): Promise<TimeEntry> {
+  const entry = entries.find((e) => e.id === id)
+  if (!entry) {
+    return Promise.reject(new Error('记录不存在'))
+  }
+  entry.approvalStatus = '待审批'
+  entry.rejectReason = undefined
+  return Promise.resolve(entry)
+}
+
+// 审批通过
+export async function approveEntry(id: string): Promise<TimeEntry> {
+  const entry = entries.find((e) => e.id === id)
+  if (!entry) {
+    return Promise.reject(new Error('记录不存在'))
+  }
+  entry.approvalStatus = '已通过'
+  entry.rejectReason = undefined
+  return Promise.resolve(entry)
+}
+
+// 驳回：记录原因
+export async function rejectEntry(id: string, reason: string): Promise<TimeEntry> {
+  const entry = entries.find((e) => e.id === id)
+  if (!entry) {
+    return Promise.reject(new Error('记录不存在'))
+  }
+  entry.approvalStatus = '已驳回'
+  entry.rejectReason = reason
+  return Promise.resolve(entry)
+}

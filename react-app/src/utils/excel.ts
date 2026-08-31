@@ -2,7 +2,7 @@ import * as XLSX from 'xlsx'
 import type { TimeEntry } from '../types/timeEntry'
 
 // 表头映射：英文字段 → 中文列名
-const headerMap: Record<keyof TimeEntry, string> = {
+const headerMap: Record<Exclude<keyof TimeEntry, 'rejectReason'>, string> = {
   id: 'ID',
   projectName: '项目名称',
   description: '工作内容',
@@ -24,7 +24,7 @@ export function exportToExcel(entries: TimeEntry[], filename: string = '工时�
   // 将数据转换为带中文表头的对象数组
   const data = entries.map((entry) =>
     Object.fromEntries(
-      Object.keys(headerMap).map((key) => [headerMap[key as keyof TimeEntry], entry[key as keyof TimeEntry]])
+      (Object.keys(headerMap) as Array<Exclude<keyof TimeEntry, 'rejectReason'>>).map((key) => [headerMap[key], entry[key]])
     )
   )
 

@@ -1,8 +1,10 @@
 // useParams：读取 URL 动态参数定位要编辑的记录；useNavigate：提交成功后编程式跳转
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useDispatch } from 'react-redux'
+import type { AppDispatch } from '../store'
 import { getEntryById } from '../api/timeEntryApi'
-import { useTimeEntries } from '../context/TimeEntryContext'
+import { updateEntry } from '../store/timesheetSlice'
 import TimeEntryForm from '../components/timesheet/TimeEntryForm'
 import type { TimeEntry } from '../types/timeEntry'
 import styles from './TimeEntryDetailPage.module.css'
@@ -10,7 +12,7 @@ import styles from './TimeEntryDetailPage.module.css'
 // 编辑页：按路由标识经请求模块加载记录并预填表单，处理加载中与记录不存在状态
 function TimeEntryEditPage() {
   const { id } = useParams()
-  const { updateEntry } = useTimeEntries()
+  const dispatch = useDispatch<AppDispatch>()
   const navigate = useNavigate()
   const [entry, setEntry] = useState<TimeEntry | null>(null)
   const [loading, setLoading] = useState(true)
@@ -45,11 +47,10 @@ function TimeEntryEditPage() {
     )
   }
 
-  // 提交修改：调用 updateEntry 后返回列表页
-  const handleSubmit = async (data: Omit<TimeEntry, 'id' | 'createdAt'>) => {
-    await updateEntry(entry.id, data)
-    // 编程式导航：await 异步流程结束后跳转，Link 无法表达这种时机
-    navigate('/timesheet')
+  // 提交修改：dispatch updateEntry 后返回列表页
+const handleSubmit = async (data: Omit<TimeEntry, 'id' | 'createdAt'>) => {
+    dispatch(updateEntry({ ...entry, ...data, hours: Number(data.hours) }))
+    navigate('/')
   }
 
   return (

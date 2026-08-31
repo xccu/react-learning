@@ -1,15 +1,16 @@
 .layout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
 }
 
 .sidebar {
   width: 240px;
   background: #1a1a2e;
   color: #fff;
-  flexShrink: 0;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
+  height: 100vh;
 }
 
 .sidebarLogo {
@@ -17,7 +18,8 @@
   align-items: center;
   gap: 8px;
   padding: 20px;
-  borderBottom: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  flex-shrink: 0;
 }
 
 .logoIcon {
@@ -29,46 +31,9 @@
   font-weight: 600;
 }
 
-.navList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.menuContainer {
   flex: 1;
-}
-
-.navLink {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 20px;
-  color: #a0a0b0;
-  text-decoration: none;
-  transition: background 0.2s, color 0.2s;
-}
-
-.navLinkActive {
-  background: rgba(99, 102, 241, 0.3);
-  color: #fff;
-  borderLeft: 3px solid #6366f1;
-}
-
-.navIcon {
-  font-size: 16px;
-}
-
-.logoutBtn {
-  flex-shrink: 0;
-  padding: 6px 10px;
-  font-size: 13px;
-  color: #a0a0b0;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: color 0.2s, background 0.2s;
-}
-
-.logoutBtn:hover {
-  color: #ff6b6b;
-  background: rgba(255, 107, 107, 0.1);
+  overflow-y: auto;
 }
 
 .userMenu {
@@ -77,6 +42,8 @@
   gap: 8px;
   padding: 12px 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: auto;
+  flex-shrink: 0;
 }
 
 .userInfo {
@@ -115,6 +82,15 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.logoutBtn {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.logoutBtn:hover {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .main {
