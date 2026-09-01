@@ -1,8 +1,4 @@
-## Purpose
-
-TBD
-
-## Requirements
+## ADDED Requirements
 
 ### Requirement: 用户管理页面路由
 应用 SHALL 通过路由将用户管理相关路径映射到对应的页面组件。

@@ -97,3 +97,29 @@
 .submitBtn:hover {
   background: #4f46e5;
 }
+
+.quickLogin {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quickLoginLabel {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.quickLoginLink {
+  font-size: 13px;
+  color: #6366f1;
+  text-decoration: none;
+}
+
+.quickLoginLink:hover {
+  color: #4f46e5;
+  text-decoration: underline;
+}

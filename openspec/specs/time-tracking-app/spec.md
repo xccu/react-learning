@@ -26,6 +26,50 @@ TBD
 - **WHEN** 没有任何工时记录
 - **THEN** 显示"暂无工时记录"的提示信息
 
+#### Scenario: 列表页提供导入导出操作
+- **WHEN** 用户访问工时列表页面
+- **THEN** 页面在查询表单与列表之间的操作栏区域提供「导入」和「导出」按钮，与统计信息同行显示
+
+#### Scenario: 导入导出按钮布局
+- **WHEN** 列表页渲染操作栏
+- **THEN** 左侧显示统计信息（总工时），右侧显示「导入」和「导出」两个操作按钮，按钮与统计信息保持同一水平线
+
+#### Scenario: 点击导出按钮
+- **WHEN** 用户点击「导出」按钮
+- **THEN** 系统将当前列表中可见的工时数据导出为 Excel 文件
+
+#### Scenario: 点击导入按钮
+- **WHEN** 用户点击「导入」按钮
+- **THEN** 系统打开文件选择对话框，允许用户选择 Excel 文件进行导入
+
+#### Scenario: 列表分页显示
+- **WHEN** 工时记录数量超过每页显示条数（10 条）
+- **THEN** 列表仅显示当前页的数据，底部显示分页控件
+
+#### Scenario: 分页控件显示
+- **WHEN** 列表数据需要分页
+- **THEN** 列表底部显示「上一页」按钮、当前页码/总页数、下一页」按钮
+
+#### Scenario: 点击上一页
+- **WHEN** 用户点击「上一页」按钮，且当前不是第一页
+- **THEN** 列表显示上一页的数据，页码减 1
+
+#### Scenario: 点击下一页
+- **WHEN** 用户点击「下一页」按钮，且当前不是最后一页
+- **THEN** 列表显示下一页的数据，页码加 1
+
+#### Scenario: 首页禁用上一页
+- **WHEN** 当前页码为第 1 页
+- **THEN** 「上一页」按钮显示为禁用状态
+
+#### Scenario: 末页禁用下一页
+- **WHEN** 当前页码为最后一页
+- **THEN** 「下一页」按钮显示为禁用状态
+
+#### Scenario: 查询条件变化重置页码
+- **WHEN** 用户提交新的查询条件
+- **THEN** 页码重置为第 1 页
+
 ### Requirement: 用户能够删除工时记录
 系统 SHALL 允许用户删除任意一条工时记录，删除前须二次确认。
 
@@ -231,3 +275,191 @@ TBD
 #### Scenario: 工时非法时阻止提交
 - **WHEN** 用户填写小于等于 0 或非 0.5 倍数的工时
 - **THEN** 表单显示校验错误提示且不提交
+
+### Requirement: 用户能够提交工时记录审批
+系统必须允许用户将工时记录提交审批，提交后记录状态变为"待审批"。
+
+#### Scenario: 提交审批
+- **WHEN** 用户点击某条工时记录的"提交"按钮
+- **THEN** 系统将该记录状态更新为"待审批"，并在列表和详情页同步显示
+
+#### Scenario: 已通过记录不可提交
+- **WHEN** 用户查看一条"已通过"状态的工时记录
+- **THEN** 不显示"提交"按钮
+
+#### Scenario: 已驳回记录不可提交
+- **WHEN** 用户查看一条"已驳回"状态的工时记录
+- **THEN** 不显示"提交"按钮，而是显示"重填"入口
+
+### Requirement: 用户能够审批通过工时记录
+系统必须允许审批人对"待审批"状态的记录执行审批通过操作。
+
+#### Scenario: 审批通过
+- **WHEN** 用户点击"待审批"记录的"通过"按钮
+- **THEN** 系统将该记录状态更新为"已通过"，并在列表和详情页同步显示
+
+#### Scenario: 审批通过确认
+- **WHEN** 用户点击"通过"按钮
+- **THEN** 系统弹出 Popconfirm 确认气泡，用户确认后才执行通过操作
+
+#### Scenario: 取消审批通过
+- **WHEN** 用户在确认气泡中点击"取消"
+- **THEN** 记录状态保持不变，不执行通过操作
+
+### Requirement: 用户能够驳回工时记录
+系统必须允许审批人对"待审批"状态的记录执行驳回操作，并记录驳回原因。
+
+#### Scenario: 驳回操作弹出原因输入
+- **WHEN** 用户点击"待审批"记录的"驳回"按钮
+- **THEN** 系统弹出 Modal，要求用户输入驳回原因
+
+#### Scenario: 驳回原因必填
+- **WHEN** 用户在 Modal 中未输入驳回原因点击确定
+- **THEN** 系统提示"请输入驳回原因"，不执行驳回操作
+
+#### Scenario: 驳回成功
+- **WHEN** 用户在 Modal 中输入驳回原因并点击确定
+- **THEN** 系统将该记录状态更新为"已驳回"，记录驳回原因，并在列表和详情页同步显示
+
+#### Scenario: 取消驳回
+- **WHEN** 用户在 Modal 中点击取消
+- **THEN** 不执行驳回操作，Modal 关闭
+
+### Requirement: 已驳回记录支持重填
+系统必须允许用户重新编辑已驳回的工时记录，编辑后再次提交审批。
+
+#### Scenario: 已驳回记录显示重填入口
+- **WHEN** 用户查看一条"已驳回"状态的工时记录
+- **THEN** 详情页显示"重填"按钮
+
+#### Scenario: 重填跳转到编辑页
+- **WHEN** 用户点击"重填"按钮
+- **THEN** 系统导航到该记录的编辑页，并预填现有数据
+
+#### Scenario: 编辑后再次提交变为待审批
+- **WHEN** 用户在编辑页修改数据并提交
+- **THEN** 系统更新记录内容，并将状态改为"待审批"
+
+### Requirement: 按状态控制操作按钮显示
+系统必须依据工时记录的审批状态，在列表和详情页显示不同的操作按钮。
+
+#### Scenario: 待审批状态显示操作按钮
+- **WHEN** 工时记录状态为"待审批"
+- **THEN** 列表操作列显示「通过」「驳回」按钮，详情页显示审批操作入口
+
+#### Scenario: 已通过状态不显示审批按钮
+- **WHEN** 工时记录状态为"已通过"
+- **THEN** 列表和详情页不显示任何审批操作按钮
+
+#### Scenario: 已驳回状态显示驳回原因
+- **WHEN** 工时记录状态为"已驳回"
+- **THEN** 详情页显示驳回原因文本，并显示"重填"按钮
+
+### Requirement: 编辑表单中审批状态不可修改
+系统必须在编辑表单中，使审批状态字段不可修改，显示当前审批状态值。
+
+#### Scenario: 编辑模式下审批状态只读
+- **WHEN** 用户在编辑页打开表单
+- **THEN** 审批状态字段显示当前记录的状态值，不可点击修改
+
+#### Scenario: 新建模式下审批状态可编辑
+- **WHEN** 用户在新增页打开表单
+- **THEN** 审批状态字段可选择，默认值为"待审批"
+
+#### Scenario: 禁用状态下样式不变
+- **WHEN** 编辑模式下审批状态字段处于禁用状态
+- **THEN** 显示效果与可编辑状态完全一致（颜色、圆点、背景不变）
+
+### Requirement: 系统使用 Redux 管理全局状态
+系统必须使用 Redux Toolkit 作为全局状态管理方案，工时相关数据集中存放于唯一的 Store 中。
+
+#### Scenario: Store 配置
+- **WHEN** 应用启动
+- **THEN** `src/store/index.ts` 通过 `configureStore` 创建全局 Store，注册 `timesheet` 状态模块
+
+#### Scenario: 类型化 Hooks
+- **WHEN** 组件需要读取或更新状态
+- **THEN** 使用 `useSelector<RootState>` 读取状态，使用 `useDispatch<AppDispatch>` 派发 action
+
+#### Scenario: 状态更新驱动 UI 刷新
+- **WHEN** 通过 dispatch 更新状态
+- **THEN** 所有订阅该状态片的组件自动重新渲染
+
+### Requirement: 系统使用 Ant Design 组件库
+系统必须使用 Ant Design 作为 UI 组件库，提供表格、表单、弹窗、状态标签、消息提示等组件。
+
+#### Scenario: 全局中文配置
+- **WHEN** 应用启动
+- **THEN** `main.tsx` 中通过 `<ConfigProvider locale={zhCN}>` 配置中文语言包
+
+#### Scenario: 表格组件替代自定义列表
+- **WHEN** 列表页渲染工时记录
+- **THEN** 使用 Ant Design Table 组件，配置 columns、dataSource、rowKey 和 pagination
+
+#### Scenario: 状态标签使用 Tag 组件
+- **WHEN** 展示审批状态
+- **THEN** 使用 Ant Design Tag 组件，不同状态对应不同颜色
+
+#### Scenario: 确认操作使用 Popconfirm
+- **WHEN** 用户执行删除等危险操作
+- **THEN** 使用 Ant Design Popconfirm 组件替代 window.confirm
+
+#### Scenario: 操作反馈使用 message
+- **WHEN** 用户执行新增、删除、审批等操作
+- **THEN** 使用 Ant Design message 组件显示成功/失败提示
+
+### Requirement: 列表页使用 Ant Design Table 渲染
+系统必须将列表页的自定义 div 列表替换为 Ant Design Table 组件。
+
+#### Scenario: Table 列配置
+- **WHEN** 列表页渲染
+- **THEN** Table 展示项目名称、工作内容、工时、审批状态（Tag）、创建时间、操作列
+
+#### Scenario: Table 分页
+- **WHEN** 工时记录数量超过每页条数
+- **THEN** Table 自动分页，显示页码信息和翻页按钮
+
+#### Scenario: Table 加载状态
+- **WHEN** 数据加载中
+- **THEN** Table 显示 loading 骨架屏
+
+#### Scenario: Table rowKey
+- **WHEN** Table 渲染数据行
+- **THEN** 使用 `rowKey="id"` 指定唯一标识，避免 React 警告
+
+### Requirement: 工时数据持久化
+系统必须将工时数据保存到 localStorage，页面刷新后数据不丢失。
+
+#### Scenario: 数据自动保存
+- **WHEN** 用户创建或删除工时记录，或执行审批操作
+- **THEN** 数据自动保存到 localStorage
+
+#### Scenario: 页面刷新恢复数据
+- **WHEN** 用户刷新页面
+- **THEN** 从 localStorage 恢复工时记录并显示，包括审批状态
+
+### Requirement: 使用 Context 管理全局状态
+系统必须使用 Redux Toolkit 管理工时数据的全局状态，替代原有的 React Context 方案。
+
+#### Scenario: Redux 提供数据
+- **WHEN** 应用启动
+- **THEN** Store 通过 Provider 提供工时数据和相关操作方法
+
+#### Scenario: 组件消费数据
+- **WHEN** 表单或列表组件需要工时数据
+- **THEN** 通过 useSelector 消费 Store 中的数据
+
+#### Scenario: 组件更新数据
+- **WHEN** 用户执行新增、编辑、删除、审批操作
+- **THEN** 通过 useDispatch 派发 action，reducer 更新状态
+
+### Requirement: 侧边栏包含用户管理导航项
+系统必须在左侧导航栏中提供"用户管理"导航链接。
+
+#### Scenario: 导航项可点击
+- **WHEN** 用户在侧边栏看到"用户管理"链接
+- **THEN** 点击链接后右侧内容区切换到用户管理页面
+
+#### Scenario: 导航高亮
+- **WHEN** 用户当前在用户管理页面
+- **THEN** 侧边栏"用户管理"菜单项处于选中高亮状态

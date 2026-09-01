@@ -9,6 +9,7 @@ interface TimeEntryFormProps {
   onSubmit: (entry: Omit<TimeEntry, 'id' | 'createdAt'>) => Promise<void>
   initialData?: TimeEntry | null
   onCancel?: () => void
+  showApprovalStatus?: boolean
 }
 
 // 审批状态下拉选项
@@ -18,7 +19,7 @@ const STATUS_OPTIONS: { value: ApprovalStatus; label: string }[] = [
   { value: '已驳回', label: '已驳回' },
 ]
 
-function TimeEntryForm({ onSubmit, initialData, onCancel }: TimeEntryFormProps) {
+function TimeEntryForm({ onSubmit, initialData, onCancel, showApprovalStatus }: TimeEntryFormProps) {
   // Ant Design Form 实例
   const [form] = Form.useForm<Omit<TimeEntry, 'id' | 'createdAt'>>()
 
@@ -36,7 +37,6 @@ function TimeEntryForm({ onSubmit, initialData, onCancel }: TimeEntryFormProps) 
         projectName: '',
         description: '',
         hours: 1,
-        approvalStatus: '待审批' as ApprovalStatus,
       })
     }
   }, [initialData, form])
@@ -102,17 +102,19 @@ function TimeEntryForm({ onSubmit, initialData, onCancel }: TimeEntryFormProps) 
           <Input type="number" step="0.5" min="0.5" placeholder="请输入工时" />
         </Form.Item>
 
-        {/* 审批状态 */}
-        <Form.Item
-          name="approvalStatus"
-          label="审批状态"
-        >
-          <Select
-            options={STATUS_OPTIONS}
-            disabled={!!initialData}
-            placeholder="请选择审批状态"
-          />
-        </Form.Item>
+        {/* 审批状态：仅编辑模式显示 */}
+        {showApprovalStatus && (
+          <Form.Item
+            name="approvalStatus"
+            label="审批状态"
+          >
+            <Select
+              options={STATUS_OPTIONS}
+              disabled
+              placeholder="审批状态"
+            />
+          </Form.Item>
+        )}
 
         {/* 按钮组 */}
         <Form.Item>

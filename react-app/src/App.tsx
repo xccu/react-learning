@@ -10,6 +10,10 @@ import TimeEntryDetailPage from './pages/TimeEntryDetailPage'
 import TimeEntryEditPage from './pages/TimeEntryEditPage'
 import TimeEntryCreatePage from './pages/TimeEntryCreatePage'
 import TimeSheetPage from './pages/TimeSheetPage'
+import UserListPage from './pages/UserListPage'
+import UserDetailPage from './pages/UserDetailPage'
+import UserCreatePage from './pages/UserCreatePage'
+import UserEditPage from './pages/UserEditPage'
 import { Layout, DocsRoutes } from './docs-examples'
 
 // App 组件：路由表配置
@@ -19,6 +23,9 @@ function App() {
     <Routes>
       {/* 登录页：无守卫，绝对路径 /login */}
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/login/admin" element={<LoginPage />} />
+      <Route path="/login/user1" element={<LoginPage />} />
+      <Route path="/login/user2" element={<LoginPage />} />
 
       {/* docs 示例路由：父路由 + 子路由嵌套 */}
       <Route path="/docs-examples" element={<Layout />}>
@@ -46,6 +53,11 @@ function App() {
         <Route path="timesheet/:id/edit" element={<TimeEntryEditPage />} />
         <Route path="timesheet/:id" element={<TimeEntryDetailPage />} />
         <Route path="timesheet" element={<TimeSheetPage />} />
+        {/* 用户管理路由：/users/create 在 /users/:id 之前，避免被误匹配 */}
+        <Route path="users/create" element={<UserCreatePage />} />
+        <Route path="users/:id" element={<UserDetailPage />} />
+        <Route path="users/:id/edit" element={<UserEditPage />} />
+        <Route path="users" element={<UserListPage />} />
       </Route>
 
       {/* 404 兜底：* 必须放在所有正常路由之后，否则会拦截正常路由 */}

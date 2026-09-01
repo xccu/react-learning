@@ -1,7 +1,7 @@
 // 工时记录的数据类型
 // 【TypeScript 类型导出】仅从 types/timeEntry.ts 导入并重新导出供外部使用
-import type { TimeEntry, ApprovalStatus } from '../types/timeEntry'
-export type { TimeEntry, ApprovalStatus }
+import type { TimeEntry, ApprovalStatus, User, UserRole } from '../types/timeEntry'
+export type { TimeEntry, ApprovalStatus, User, UserRole }
 
 // 内存中初始化模拟数据数组（包含 3 条示例记录）
 let entries: TimeEntry[] = [
@@ -158,4 +158,94 @@ export async function rejectEntry(id: string, reason: string): Promise<TimeEntry
   entry.approvalStatus = '已驳回'
   entry.rejectReason = reason
   return Promise.resolve(entry)
+}
+
+// ========== 用户模块 ==========
+
+// 内存中初始化用户模拟数据（包含 3 条默认用户）
+let users: User[] = [
+  {
+    id: '1',
+    username: 'admin',
+    password: 'admin123',
+    roles: ['管理员'],
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+  },
+  {
+    id: '2',
+    username: 'user1',
+    password: 'user123',
+    roles: ['普通用户'],
+    createdAt: new Date(Date.now() - 43200000).toISOString(),
+  },
+  {
+    id: '3',
+    username: 'user2',
+    password: 'user123',
+    roles: ['普通用户'],
+    createdAt: new Date(Date.now() - 21600000).toISOString(),
+  },
+]
+
+// 获取所有用户
+export async function getUsers(): Promise<User[]> {
+  return Promise.resolve([...users])
+}
+
+// 按查询条件过滤用户
+export async function queryUsers(query: UserQuery): Promise<User[]> {
+  const username = query.username?.trim() ?? ''
+  const role = query.role ?? ''
+
+  const filtered = users.filter((u) => {
+    if (username && !u.username.toLowerCase().includes(username.toLowerCase())) return false
+    if (role && !u.roles.includes(role)) return false
+    return true
+  })
+  return Promise.resolve([...filtered])
+}
+
+// 获取单个用户
+export async function getUserById(id: string): Promise<User> {
+  const user = users.find((u) => u.id === id)
+  if (!user) {
+    return Promise.reject(new Error('用户不存在'))
+  }
+  return Promise.resolve({ ...user })
+}
+
+// 新增用户
+export async function addUser(user: Omit<User, 'id' | 'createdAt'>): Promise<User> {
+  const newUser: User = {
+    ...user,
+    id: Date.now().toString(),
+    createdAt: new Date().toISOString(),
+  }
+  users = [newUser, ...users]
+  return Promise.resolve(newUser)
+}
+
+// 更新用户
+export async function updateUser(id: string, updates: Partial<Omit<User, 'id' | 'createdAt' | 'password'>>): Promise<User> {
+  const index = users.findIndex((u) => u.id === id)
+  if (index === -1) {
+    return Promise.reject(new Error('用户不存在'))
+  }
+  users[index] = { ...users[index], ...updates }
+  return Promise.resolve(users[index])
+}
+
+// 删除用户
+export async function deleteUser(id: string): Promise<void> {
+  users = users.filter((u) => u.id !== id)
+  return Promise.resolve()
+}
+
+// 用户登录：验证用户名+密码
+export async function login(username: string, password: string): Promise<User> {
+  const user = users.find((u) => u.username === username && u.password === password)
+  if (!user) {
+    return Promise.reject(new Error('用户名或密码错误'))
+  }
+  return Promise.resolve({ ...user })
 }

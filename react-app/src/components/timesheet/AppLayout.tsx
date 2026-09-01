@@ -2,6 +2,9 @@
 import { Menu, Avatar, Button, Tooltip } from 'antd'
 import { UserOutlined, LogoutOutlined, PlusOutlined, FileTextOutlined } from '@ant-design/icons'
 import { useNavigate, useLocation, Outlet } from 'react-router-dom'
+import { useDispatch, useSelector } from 'react-redux'
+import type { RootState, AppDispatch } from '../../store'
+import { clearCurrentUser } from '../../store/userSlice'
 import { getUsername, logout } from '../../utils/auth'
 import styles from './AppLayout.module.css'
 
@@ -10,9 +13,12 @@ function AppLayout() {
   const navigate = useNavigate()
   const location = useLocation()
   const username = getUsername()
+  const dispatch = useDispatch<AppDispatch>()
+  const currentUser = useSelector((state: RootState) => state.user.currentUser)
 
-  // 退出登录
+  // 退出登录：清除 Redux 用户信息 + 清除 localStorage + 跳转
   const handleLogout = () => {
+    dispatch(clearCurrentUser())
     logout()
     navigate('/login', { replace: true })
   }
@@ -28,6 +34,11 @@ function AppLayout() {
       key: '/timesheet/create',
       icon: <PlusOutlined />,
       label: '新增工时',
+    },
+    {
+      key: '/users',
+      icon: <UserOutlined />,
+      label: '用户管理',
     },
   ]
 
@@ -51,7 +62,7 @@ function AppLayout() {
 
         <div className={styles.userMenu}>
           <Avatar icon={<UserOutlined />} className={styles.userAvatar} />
-          <span className={styles.userName}>{username ?? '未登录'}</span>
+          <span className={styles.userName}>{currentUser?.username ?? username ?? '未登录'}</span>
           <Tooltip placement="right" title="注销">
             <Button
               type="text"

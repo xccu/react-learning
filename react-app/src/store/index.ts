@@ -1,9 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit'
 import timesheetReducer from './timesheetSlice'
+import userReducer from './userSlice'
 
 const store = configureStore({
   reducer: {
     timesheet: timesheetReducer,
+    user: userReducer,
   },
 })
 

@@ -16,86 +16,76 @@
 
 ```mermaid
 graph TD
-    subgraph 应用层
-        App["App\n路由表 + Provider"]
-    end
+    App["App\n路由表 + TimeEntryProvider"]
 
-    subgraph 路由与布局
-        App --> Login["LoginPage\n登录页"]
-        App --> AL["AppLayout\n主布局"]
-        AL --> OL["Outlet\n子页面出口"]
-    end
+    App --> Login["LoginPage\n登录页"]
+    App --> AL["AppLayout\n主布局"]
+    AL --> OL["Outlet\n子页面出口"]
 
-    subgraph 页面层
-        OL --> LP["TimeEntryListPage\n列表页"]
-        OL --> DP["TimeEntryDetailPage\n详情页"]
-        OL --> EP["TimeEntryEditPage\n编辑页"]
-        OL --> CP["TimeEntryCreatePage\n新增页"]
-        OL --> TSP["TimeSheetPage\n原工时填报页"]
-    end
+    OL --> LP["TimeEntryListPage\n列表页（Redux 迁移目标）"]
+    OL --> DP["TimeEntryDetailPage\n详情页（Redux 迁移目标）"]
+    OL --> EP["TimeEntryEditPage\n编辑页（Redux 迁移目标）"]
+    OL --> CP["TimeEntryCreatePage\n新增页（Redux 迁移目标）"]
+    OL --> TSP["TimeSheetPage\n原工时填报页"]
 
-    subgraph 页面组件
-        LP --> TQF["TimeEntryQueryForm\n查询表单"]
-        LP --> Stats["Stats\n总工时统计"]
-        LP --> TEL["TimeEntryList\n记录列表"]
-        TEL --> TEI["TimeEntryItem\n单条记录"]
-        LP --> TB["Toolbar\n操作栏"]
-        TB --> EXP["exportToExcel\n导出"]
-        TB --> IMP["importFromExcel\n导入"]
-    end
+    LP --> TQF["TimeEntryQueryForm\n查询表单"]
+    LP --> Stats["Stats\n总工时统计"]
+    LP --> TEL["TimeEntryList\n记录列表"]
+    TEL --> TEI["TimeEntryItem\n单条记录"]
 
-    subgraph 表单组件
-        Login --> TEF["TimeEntryForm\n工时表单"]
-        EP --> TEF
-        CP --> TEF
-        TSP --> TEF
-    end
+    LP --> TB["Toolbar\n操作栏：导入导出按钮"]
+    TB --> EXP["exportToExcel\n导出工具函数"]
+    TB --> IMP["importFromExcel\n导入工具函数"]
 
-    subgraph 数据流
-        LP --> Context["TimeEntryContext\n全局共享层"]
-        DP --> Context
-        EP --> Context
-        CP --> Context
-        Context --> TEA["timeEntryApi\n数据请求"]
-        TEA --> HC["httpClient\nAxios 实例"]
-        HC --> MA["mockAdapter\n模拟端点"]
-        MA --> MOCK["mockApi\n内存数据源"]
-        EXP --> XL["xlsx\nExcel 库"]
-        IMP --> XL
-        TEA --> BATCH["addEntries\n批量添加"]
-    end
+    LP --> Context["TimeEntryContext\n全局共享层（待迁移）"]
+    DP --> Context
+    EP --> Context
+    CP --> Context
+    TSP --> Context
 
-    subgraph Redux 全局状态
-        LP --> Redux["Redux Store\n全局状态管理"]
-        Redux --> Slice["timesheetSlice\ncreateSlice"]
-        Slice --> REDUCE["reducers\nsetEntries / addEntry / updateEntry\ndeleteEntry / approveEntry / rejectEntry"]
-        Slice --> IMMER["Immer\n不可变更新"]
-        Redux --> Provider["<Provider store>\nmain.tsx"]
-        Redux --> useSelector["useSelector\n读取状态"]
-        Redux --> useDispatch["useDispatch\n发送动作"]
-    end
+    Login --> TEF["TimeEntryForm\n工时表单（RHF）"]
+    EP --> TEF
+    CP --> TEF
+    TSP --> TEF
 
-    subgraph 审批 API
-        TEA --> SUBMIT_API["submitEntry\n提交"]
-        TEA --> APPROVE_API["approveEntry\n通过"]
-        TEA --> REJECT_API["rejectEntry\n驳回"]
-        SUBMIT_API --> MOCK
-        APPROVE_API --> MOCK
-        REJECT_API --> MOCK
-        MA --> APPROVE_EP["PUT /:id/approve"]
-        MA --> REJECT_EP["PUT /:id/reject"]
-        MA --> SUBMIT_EP["PUT /:id/submit"]
-    end
+    Context --> TEA["timeEntryApi\n数据请求模块"]
+    TEA --> HC["httpClient\nAxios 实例"]
+    HC --> MA["mockAdapter\n模拟端点"]
+    MA --> MOCK["mockApi\n内存数据源"]
 
-    subgraph Ant Design 组件
-        LP --> Antd["Ant Design\nUI 组件库"]
-        Antd --> ConfigProvider["ConfigProvider\n中文语言包"]
-        Antd --> Table["Table\n表格"]
-        Antd --> Tag["Tag\n状态标签"]
-        Antd --> Modal["Modal\n弹窗"]
-        Antd --> Popconfirm["Popconfirm\n确认气泡"]
-        Antd --> msg["message\n消息提示"]
-    end
+    EXP --> XL["xlsx（SheetJS）\nExcel 库"]
+    IMP --> XL
+    TEA --> BATCH["addEntries\n批量添加"]
+
+    %% ====== Redux 新增链路 ======
+    LP --> Redux["Redux Store\n全局状态管理"]
+    Redux --> Slice["timesheetSlice\ncreateSlice"]
+    Slice --> REDUCE["reducers: setEntries/addEntry/updateEntry/deleteEntry/approveEntry/rejectEntry"]
+    Slice --> IMMER["Immer\n不可变更新内置支持"]
+
+    Redux --> Provider["<Provider store={store}>\nmain.tsx"]
+    Redux --> useSelector["useSelector\n读取状态"]
+    Redux --> useDispatch["useDispatch\ndispatch 动作"]
+
+    TEA --> APPROVE_API["approveEntry\n审批通过 API"]
+    TEA --> REJECT_API["rejectEntry\n驳回 API"]
+    TEA --> SUBMIT_API["submitEntry\n提交 API"]
+    APPROVE_API --> MOCK
+    REJECT_API --> MOCK
+    SUBMIT_API --> MOCK
+
+    MA --> APPROVE_EP["PUT /time-entries/:id/approve"]
+    MA --> REJECT_EP["PUT /time-entries/:id/reject"]
+    MA --> SUBMIT_EP["PUT /time-entries/:id/submit"]
+
+    %% ====== Ant Design 新增链路 ======
+    LP --> Antd["Ant Design\nUI 组件库"]
+    Antd --> Table["Table\n表格组件"]
+    Antd --> Tag["Tag\n状态标签"]
+    Antd --> Modal["Modal\n弹窗组件"]
+    Antd --> Popconfirm["Popconfirm\n确认气泡"]
+    Antd --> message["message\n消息提示"]
+    Antd --> ConfigProvider["ConfigProvider\n中文语言包"]
 
     style App fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#333
     style Context fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#333
@@ -104,18 +94,10 @@ graph TD
     style BATCH fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#333
     style Redux fill:#e3f2fd,stroke:#1565c0,stroke-width:3px,color:#333
     style Slice fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#333
-    style REDUCE fill:#e3f2fd,stroke:#1565c0,stroke-width:1px,color:#333
-    style IMMER fill:#e3f2fd,stroke:#1565c0,stroke-width:1px,color:#333
-    style Provider fill:#e3f2fd,stroke:#1565c0,stroke-width:1px,color:#333
-    style useSelector fill:#e3f2fd,stroke:#1565c0,stroke-width:1px,color:#333
-    style useDispatch fill:#e3f2fd,stroke:#1565c0,stroke-width:1px,color:#333
+    style Provider fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#333
     style Antd fill:#fce4ec,stroke:#c2185b,stroke-width:3px,color:#333
-    style ConfigProvider fill:#fce4ec,stroke:#c2185b,stroke-width:1px,color:#333
-    style Table fill:#fce4ec,stroke:#c2185b,stroke-width:1px,color:#333
-    style Tag fill:#fce4ec,stroke:#c2185b,stroke-width:1px,color:#333
-    style Modal fill:#fce4ec,stroke:#c2185b,stroke-width:1px,color:#333
-    style Popconfirm fill:#fce4ec,stroke:#c2185b,stroke-width:1px,color:#333
-    style msg fill:#fce4ec,stroke:#c2185b,stroke-width:1px,color:#333
+    style Table fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#333
+    style ConfigProvider fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#333
     style Login fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#333
     style AL fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#333
     style OL fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#333
@@ -124,9 +106,11 @@ graph TD
     style EP fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#333
     style CP fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#333
     style TEF fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#333
-    style SUBMIT_API fill:#e3f2fd,stroke:#1565c0,stroke-width:1px,color:#333
+    style REDUCE fill:#e3f2fd,stroke:#1565c0,stroke-width:1px,color:#333
+    style IMMER fill:#e3f2fd,stroke:#1565c0,stroke-width:1px,color:#333
     style APPROVE_API fill:#e3f2fd,stroke:#1565c0,stroke-width:1px,color:#333
     style REJECT_API fill:#e3f2fd,stroke:#1565c0,stroke-width:1px,color:#333
+    style SUBMIT_API fill:#e3f2fd,stroke:#1565c0,stroke-width:1px,color:#333
 ```
 
 </div>
