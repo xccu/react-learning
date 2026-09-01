@@ -2,9 +2,17 @@
 
 > 本文按照从易到难的顺序，结合第 3 周「导入导出与列表性能优化」改造后的真实代码，逐一讲解 xlsx（SheetJS）Excel 导入导出与 React.memo / useCallback 列表性能优化相关的知识点。每个知识点均参考 `学习资料/3 React生态与工程化/` 的编写格式，包含定义、示例、使用效果和注意事项。与 xlsx、memo 核心知识点关系不大或超纲的内容（列表分页、操作栏布局、批量添加接口、导入流程集成）分别归入「三、其他重构」「四、知识进阶点」，文末附「第 3 周需求与技术栈对照检查」与「学习路径建议」。
 >
+> **参考文档：** 本文涉及的技术栈参考 `学习资料/3 React生态与工程化/` 文件夹中的以下文档：
+>
+> | 技术 | 参考文档 | 对应章节 |
+> |------|---------|---------|
+> | xlsx（SheetJS） | [`3.4 xlsx（SheetJS）.md`](3.4%20xlsx（SheetJS）.md) | 安装、读写 API、JSON 转工作表、Blob 下载 |
+> | React.memo | [`3.5 memo.md`](3.5%20memo.md) | 组件缓存、浅比较原理、使用场景 |
+> | useCallback | [`3.8 useMemo 与 useCallback.md`](3.8%20useMemo%20与%20useCallback.md) | 回调引用稳定、性能优化 |
+>
 > **当前项目版本：** React `19.2.7`，TypeScript `~6.0.2`（`tsc --noEmit` 严格校验），新增 `xlsx`（SheetJS）。路由结构沿用第 1 周 `react-router-dom@^7.18.1`，数据请求层沿用第 2 周 Axios + axios-mock-adapter。
 >
-> **前置准备（本项目已完成）：** `xlsx` 依赖已在本次改造中安装于 `react-app/package.json`。若在全新项目复现，安装命令为 `npm i xlsx`（详见 `3.4 xlsx（SheetJS）.md` 的「基本用法」章节）。
+> **前置准备（本项目已完成）：** `xlsx` 依赖已在本次改造中安装于 `react-app/package.json`。若在全新项目复现，安装命令为 `npm i xlsx`（详见 [`3.4 xlsx（SheetJS）.md`](3.4%20xlsx（SheetJS）.md) 的「基本用法」章节）。
 >
 > **当前项目范围说明：** 本次在第 2 周数据请求层基础上新增 xlsx 导入导出能力，并对列表页进行前端分页与 `React.memo` / `useCallback` 性能优化。真实后端仍由 mock adapter 模拟，业务代码只依赖 `timeEntryApi` 函数签名与 `utils/excel.ts` 纯函数。
 

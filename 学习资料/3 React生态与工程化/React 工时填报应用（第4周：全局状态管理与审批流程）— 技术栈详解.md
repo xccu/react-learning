@@ -2,9 +2,16 @@
 
 > 本文按照从易到难的顺序，结合第 4 周「全局状态管理与审批流程」引入的 Redux Toolkit、Ant Design 组件库与审批流程改造，逐一讲解全局状态管理、组件库集成、审批状态机相关的知识点。每个知识点均参考前 3 周的编写格式，包含定义、示例、使用效果和注意事项。与 Redux、Ant Design 核心知识点关系不大或超纲的内容（审批流程集成、页面渐进式替换）分别归入「三、其他重构」「四、知识进阶点」，文末附「第 4 周需求与技术栈对照检查」与「学习路径建议」。
 >
+> **参考文档：** 本文涉及的技术栈参考 `学习资料/3 React生态与工程化/` 文件夹中的以下文档：
+>
+> | 技术 | 参考文档 | 对应章节 |
+> |------|---------|---------|
+> | Redux Toolkit | [`3.6 Redux Toolkit.md`](3.6%20Redux%20Toolkit.md) | `configureStore`、`createSlice`、Immer、`useSelector`/`useDispatch` |
+> | Ant Design | [`3.7 Ant Design.md`](3.7%20Ant%20Design.md) | `ConfigProvider`、`Table`、`Tag`、`Modal`、`Popconfirm`、`message` |
+>
 > **当前项目版本：** React `19.2.7`，TypeScript `~6.0.2`（`tsc --noEmit` 严格校验），新增 `@reduxjs/toolkit`、`react-redux`、`antd`。路由结构沿用第 1 周 `react-router-dom@^7.18.1`，数据请求层沿用第 2 周 Axios + axios-mock-adapter，导入导出沿用第 3 周 xlsx。
 >
-> **前置准备（本项目已完成）：** Redux Toolkit 与 Ant Design 依赖已在本次改造中安装于 `react-app/package.json`。若在全新项目复现，安装命令为 `npm i @reduxjs/toolkit react-redux antd`（详见「二、知识点详解 → Redux Toolkit 篇」的「1. 依赖安装与配置」章节）。
+> **前置准备（本项目已完成）：** Redux Toolkit 与 Ant Design 依赖已在本次改造中安装于 `react-app/package.json`。若在全新项目复现，安装命令为 `npm i @reduxjs/toolkit react-redux antd`（详见 [`3.6 Redux Toolkit.md`](3.6%20Redux%20Toolkit.md) 的「前置准备」章节与 [`3.7 Ant Design.md`](3.7%20Ant%20Design.md) 的「快速开始」章节）。
 >
 > **当前项目范围说明：** 本次在第 3 周基础上新增 Redux 全局状态管理、审批流程 API 与 reducer、Ant Design 基础配置，并规划从 Context 到 Redux 的渐进式迁移路径。真实后端仍由 mock adapter 模拟，业务代码只依赖 `timeEntryApi` 函数签名与 Redux slice。
 
@@ -957,6 +964,34 @@ message.info('文件中没有可导入的数据')
 - `message` 是全局组件，不需要包裹在特定容器中。
 - `message.loading` 返回一个关闭函数，调用后提示消失。适合长时间操作的场景（如导入 Excel）。
 - 多个 `message` 会自动堆叠显示，最多显示 3 条，超出后自动关闭最早的提示。
+
+### 13. Ant Design 组件重构清单
+
+#### 定义
+
+第 4 周采用**渐进式替换**策略，将原有自定义组件逐步替换为 Ant Design 组件。以下为已替换部分的清单：
+
+| 原组件 / 实现 | 替换为 Ant Design 组件 | 涉及页面 / 组件 | 替换说明 |
+|--------------|----------------------|----------------|---------|
+| 自定义列表（div 结构） | `Table` | `TimeEntryListPage` | 列定义、分页、loading 状态、rowKey |
+| 自定义审批状态标签 | `Tag` | `TimeEntryListPage`（Table columns） | 待审批=orange、已通过=green、已驳回=red |
+| `window.confirm` | `Popconfirm` | `TimeEntryListPage`（操作列） | 删除确认气泡 |
+| `alert` | `message` | 全页面 | `message.success` / `message.error` / `message.loading` |
+| 手动分页控件（上一页/下一页按钮） | `Pagination` | `TimeEntryListPage` | 替代手动实现的翻页按钮 + 页码显示 |
+| 工时表单（自定义 Input/TextArea/Select） | `Form` + `Input` + `TextArea` + `Select` | `TimeEntryForm` | 使用 Ant Design 表单组件，保留 React Hook Form 管理状态 |
+| 审批状态选择器 | `Select`（disabled 属性） | `TimeEntryForm` | 编辑模式下 disabled，禁用态样式不变 |
+| 登录页表单 | `Form` + `Input` + `Input.Password` + `Card` | `LoginPage` | `Input` 带 prefix 图标，`Card` 包裹表单 |
+| 404 页面 | `Result` | `NotFoundPage` | `Result` `status="404"` + `Button` |
+| 总工时统计 | `Statistic` | `Stats` 组件 | `title` + `value` + `suffix` |
+| 列表查询表单 | `Form`（inline）+ `Input` + `Select` + `Button` + `Space` | `TimeEntryQueryForm` | 内联布局，`Input.allowClear` |
+| 侧边栏导航 | `Layout.Sider` + `Menu` + `Avatar` + `Button` | `AppLayout` | 深色主题菜单，`Avatar` 显示用户头像 |
+| Header 组件 | 保留自定义实现 | `Header` | 替换优先级低，代码量少，保留自定义 |
+
+#### 注意事项
+
+- **替换优先级**：列表页 Table 替换优先级最高（价值最大），Header 组件优先级最低（保留自定义）。详见「四、知识进阶点 → 2. 渐进式替换策略」。
+- **未替换部分**：Header 组件保留自定义实现，因代码量少、替换收益低。
+- **样式隔离**：Ant Design 全局样式通过 `antd/dist/reset.css` 引入，自定义组件使用 CSS Modules 避免冲突。
 
 ---
 

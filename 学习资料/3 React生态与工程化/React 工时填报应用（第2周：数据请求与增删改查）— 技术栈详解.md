@@ -2,9 +2,17 @@
 
 > 本文按照从易到难的顺序，结合第 2 周「数据请求与增删改查」改造后的真实代码，逐一讲解数据请求层（Axios + axios-mock-adapter）与表单管理（React Hook Form）相关的知识点。每个知识点均参考 `学习资料/3 React生态与工程化/` 的编写格式，包含定义、示例、使用效果和注意事项。与 Axios、React Hook Form 核心知识点关系不大或超纲的内容（Context 错误状态与重试、列表三态、删除确认、按 id 加载、真实后端接入规划）分别归入「三、其他重构」「四、知识进阶点」，文末附「第 2 周需求与技术栈对照检查」与「学习路径建议」。
 >
+> **参考文档：** 本文涉及的技术栈参考 `学习资料/3 React生态与工程化/` 文件夹中的以下文档：
+>
+> | 技术 | 参考文档 | 对应章节 |
+> |------|---------|---------|
+> | Axios | [`3.2 Axios.md`](3.2%20Axios.md) | 请求实例、拦截器、错误处理、请求取消 |
+> | React Hook Form | [`3.3 React Hook Form.md`](3.3%20React%20Hook%20Form.md) | 表单 Hook、字段注册、校验规则、受控组件对比 |
+> | axios-mock-adapter | [`3.2 Axios.md`](3.2%20Axios.md) | Mock 适配器注册、模拟 REST 接口 |
+>
 > **当前项目版本：** React `19.2.7`，TypeScript `~6.0.2`（`tsc --noEmit` 严格校验），新增 Axios `1.19.0`、React Hook Form `7.85.0`、`axios-mock-adapter` `2.1.0`。路由结构沿用第 1 周 `react-router-dom@^7.18.1`，本次未改动 `App.tsx` 路由表与既有页面路由。
 >
-> **前置准备（本项目已完成）：** 第 2 周三个依赖已在本次改造中安装。若在全新项目复现，安装命令为 `npm i axios react-hook-form` 与 `npm i -D axios-mock-adapter`（详见 `3.2 Axios.md` 的「创建请求实例」与 `3.3 React Hook Form.md` 的「表单 Hook 与字段注册」）。
+> **前置准备（本项目已完成）：** 第 2 周三个依赖已在本次改造中安装。若在全新项目复现，安装命令为 `npm i axios react-hook-form` 与 `npm i -D axios-mock-adapter`（详见 [`3.2 Axios.md`](3.2%20Axios.md) 的「创建请求实例」与 [`3.3 React Hook Form.md`](3.3%20React%20Hook%20Form.md) 的「表单 Hook 与字段注册」）。
 >
 > **当前项目范围说明：** 第 1 周已用现有技术栈（受控组件 + mockApi + Context）提前实现了独立新增页与列表查询；本次在第 1 周基础上引入真实「请求语义」——页面数据统一经 Axios 请求实例发起，由 `axios-mock-adapter` 在浏览器端模拟后端 REST 接口（`/api/time-entries/*`），业务代码只依赖数据请求模块 `timeEntryApi` 的函数签名。**真实后端接入点定在第 4 周**（随 Redux 异步数据流一并引入，届时移除 mock 注册即可，页面代码零改动），详见「四、知识进阶点」。
 

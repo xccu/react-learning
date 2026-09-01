@@ -2,9 +2,15 @@
 
 > 本文按照从易到难的顺序，结合第 1 周「路由与页面结构」改造后的真实代码，逐一讲解登录页、列表页、详情页涉及的 React Router 与相关知识点。每个知识点均参考 `学习资料/3 React生态与工程化/` 的编写格式，包含定义、示例、使用效果和注意事项。与第 1 周 React Router 核心知识点关系不大或超纲的内容（受控表单、find、可选 Props、第 2 周提前实现）分别归入「三、其他重构」「四、知识进阶点」，文末附「第 1 周需求与技术栈对照检查」与「学习路径建议」。
 >
-> **当前项目版本：** React `19.2.7`、React Router 使用 `react-router-dom@^7.18.1`（React Router v7，声明式模式）。v7 已合并 `react-router` 与 `react-router-dom`，本教程采用 v7 兼容的 `BrowserRouter + Routes + Route` 声明式写法，v6 语法可无缝迁移。各版本差异详见 `学习资料/3 React生态与工程化/3.1 React Router.md` 的「版本差异」章节。
+> **参考文档：** 本文涉及的技术栈参考 `学习资料/3 React生态与工程化/` 文件夹中的以下文档：
 >
-> **前置准备（本项目已完成）：** `react-router-dom@^7.18.1` 已在脚手架阶段随 `package.json` 安装，无需重复执行；若在全新项目复现，安装命令为 `npm install react-router-dom`（详见 `3.1 React Router.md` 的「前置准备」章节）。
+> | 技术 | 参考文档 | 对应章节 |
+> |------|---------|---------|
+> | React Router | [`3.1 React Router.md`](3.1%20React%20Router.md) | 路由基础、声明式导航、路由参数、路由守卫 |
+>
+> **当前项目版本：** React `19.2.7`、React Router 使用 `react-router-dom@^7.18.1`（React Router v7，声明式模式）。v7 已合并 `react-router` 与 `react-router-dom`，本教程采用 v7 兼容的 `BrowserRouter + Routes + Route` 声明式写法，v6 语法可无缝迁移。各版本差异详见 [`3.1 React Router.md`](3.1%20React%20Router.md) 的「版本差异」章节。
+>
+> **前置准备（本项目已完成）：** `react-router-dom@^7.18.1` 已在脚手架阶段随 `package.json` 安装，无需重复执行；若在全新项目复现，安装命令为 `npm install react-router-dom`（详见 [`3.1 React Router.md`](3.1%20React%20Router.md) 的「前置准备」章节）。
 >
 > **当前项目范围说明：** 项目在第 1 周路由骨架的基础上，已用**现有技术栈**（无新增依赖）提前实现了部分第 2 周功能——独立新增页（`/timesheet/create`，复用 `TimeEntryForm`）与列表查询（`TimeEntryQueryForm` + mockApi `queryEntries`），详见「四、知识进阶点」。第 2 周的 Axios、React Hook Form 仍按计划未引入。
 
