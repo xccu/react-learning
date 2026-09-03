@@ -1,6 +1,4 @@
-// 【React Hook Form】用户查询表单：useForm 管理查询条件字段
-// 【Ant Design】UI 组件替换为 Form、Input、Select、Button、Space
-import { useForm } from 'react-hook-form'
+// 【Ant Design】用户查询表单：Form.useForm 管理查询条件字段
 import { Form, Input, Select, Button, Space } from 'antd'
 import type { UserQuery, UserRole } from '../../api/mockApi'
 import styles from './TimeEntryQueryForm.module.css'
@@ -11,40 +9,38 @@ interface UserQueryFormProps {
 }
 
 // 角色下拉选项
-const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
-  { value: '', label: '全部' },
+const ROLE_OPTIONS: { value: UserRole | undefined; label: string }[] = [
+  { value: undefined, label: '全部' },
   { value: '管理员', label: '管理员' },
   { value: '普通用户', label: '普通用户' },
 ]
 
 function UserQueryForm({ onQuery, onCreate }: UserQueryFormProps) {
-  const { register, handleSubmit, reset } = useForm({
-    defaultValues: { username: '', role: '' },
-  })
+  const [form] = Form.useForm<{ username?: string; role?: UserRole }>()
 
-  const handleFormSubmit = (values: Record<string, string>) => {
+  const handleFormSubmit = (values: { username?: string; role?: UserRole }) => {
     onQuery({
-      username: values.username?.trim(),
-      role: values.role as any,
+      username: values.username?.trim() || undefined,
+      role: values.role,
     })
   }
 
   const handleClear = () => {
-    reset({ username: '', role: '' })
+    form.resetFields()
     onQuery({})
   }
 
   return (
-    <Form layout="inline" onFinish={handleSubmit(handleFormSubmit)} className={styles.form}>
+    <Form form={form} layout="inline" onFinish={handleFormSubmit} className={styles.form}>
       <Form.Item
         label="用户名"
-        {...register('username')}
+        name="username"
       >
         <Input allowClear placeholder="请输入用户名" />
       </Form.Item>
       <Form.Item
         label="角色"
-        {...register('role')}
+        name="role"
       >
         <Select allowClear placeholder="请选择角色" options={ROLE_OPTIONS} />
       </Form.Item>

@@ -16,9 +16,9 @@
 |---------|---------|---------|
 | 用户类型定义 | `src/types/timeEntry.ts` | TypeScript 联合类型、数组类型字段 |
 | 用户 Mock 数据与 API | `src/api/mockApi.ts` / `timeEntryApi.ts` / `mockAdapter.ts` | RESTful 路由注册、登录验证端点 |
-| Redux 多 Slice 管理 | `src/store/userSlice.ts` / `index.ts` | 多 Slice 状态树、`currentUser` 状态片 |
-| 用户 CRUD 页面 | `UserListPage` / `UserDetailPage` / `UserCreatePage` / `UserEditPage` | 前端分页、查询过滤、动态 import |
-| 登录页重构 | `LoginPage.tsx` | `login` API 调用、`dispatch(setCurrentUser)` |
+| Redux 多 Slice 管理 | `src/store/userSlice.ts` / `index.ts` | 多 Slice 状态树、`currentUser` 状态片、`createAsyncThunk`（6 个 thunks） |
+| 用户 CRUD 页面 | `UserListPage` / `UserDetailPage` / `UserCreatePage` / `UserEditPage` | 前端分页、查询过滤、Redux 缓存读取、thunk 操作 |
+| 登录页重构 | `LoginPage.tsx` | `loginUser` thunk、`fetchUsers` thunk、`.unwrap()` |
 | 侧边栏用户信息 | `AppLayout.tsx` | `useSelector` 读取 `currentUser` |
 
 ---
@@ -162,17 +162,18 @@ mock.onGet(/\/users\/[^/]+$/).reply((config) => {
 
 ---
 
-### 3. Redux 多 Slice 管理
+### 3. Redux 多 Slice 管理 + createAsyncThunk
 
 #### 定义
 
-第 5 周在已有的 `timesheetSlice`（工时状态）之外，新增 `userSlice`（用户状态），实现 Redux 多 Slice 管理。状态树从单层扩展为双层。
+第 5 周在已有的 `timesheetSlice`（工时状态）之外，新增 `userSlice`（用户状态），实现 Redux 多 Slice 管理。状态树从单层扩展为双层。同时引入 `createAsyncThunk` 处理异步操作（获取用户列表、获取单个用户、创建/更新/删除用户、登录），统一异步请求的 pending / fulfilled / rejected 状态管理。
 
-#### 示例 — userSlice.ts
+#### 示例 — userSlice.ts（含 async thunks）
 
 ```ts
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
+import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
 import type { User } from '../types/timeEntry'
+import { getUsers as getUsersApi, getUserById as getUserByIdApi, addUser as addUserApi, updateUser as updateUserApi, deleteUser as deleteUserApi, login as loginApi } from '../api/timeEntryApi'
 
 interface UserState {
   users: User[]
@@ -188,45 +189,99 @@ const initialState: UserState = {
   error: null,
 }
 
+// 异步 thunks：获取用户列表
+export const fetchUsers = createAsyncThunk<User[]>('user/fetchUsers', async () => {
+  return getUsersApi()
+})
+
+// 异步 thunks：根据 ID 获取单个用户
+export const fetchUserById = createAsyncThunk<User, string>('user/fetchUserById', async (id) => {
+  return getUserByIdApi(id)
+})
+
+// 异步 thunks：创建用户
+export const createUser = createAsyncThunk<User, Omit<User, 'id' | 'createdAt'>>('user/createUser', async (userData) => {
+  return addUserApi(userData)
+})
+
+// 异步 thunks：更新用户
+export const updateUser = createAsyncThunk<User, { id: string; updates: Partial<Omit<User, 'id' | 'createdAt' | 'password'>> }>(
+  'user/updateUser',
+  async ({ id, updates }) => {
+    return updateUserApi(id, updates)
+  }
+)
+
+// 异步 thunks：删除用户
+export const removeUser = createAsyncThunk<void, string, { rejectValue: string }>('user/deleteUser', async (id, { rejectWithValue }) => {
+  try {
+    await deleteUserApi(id)
+  } catch (err) {
+    return rejectWithValue(err instanceof Error ? err.message : '删除失败')
+  }
+})
+
+// 异步 thunks：用户登录
+export const loginUser = createAsyncThunk<User, { username: string; password: string }>('user/loginUser', async (credentials) => {
+  return loginApi(credentials.username, credentials.password)
+})
+
 const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
+    // 设置所有用户（用于加载数据）
     setUsers(state, action: PayloadAction<User[]>) {
       state.users = action.payload
     },
+    // 新增用户：放到数组最前面
     addUser(state, action: PayloadAction<User>) {
       state.users.unshift(action.payload)
     },
+    // 更新用户：按 id 查找并替换
     updateUser(state, action: PayloadAction<User>) {
       const index = state.users.findIndex((u) => u.id === action.payload.id)
       if (index !== -1) {
         state.users[index] = action.payload
       }
     },
+    // 删除用户
     deleteUser(state, action: PayloadAction<string>) {
       state.users = state.users.filter((u) => u.id !== action.payload)
     },
+    // 设置当前登录用户
     setCurrentUser(state, action: PayloadAction<User | null>) {
       state.currentUser = action.payload
     },
+    // 清除当前用户
     clearCurrentUser(state) {
       state.currentUser = null
     },
   },
+  extraReducers: (builder) => {
+    // fetchUsers
+    builder
+      .addCase(fetchUsers.pending, (state) => { state.loading = true; state.error = null })
+      .addCase(fetchUsers.fulfilled, (state, action) => { state.loading = false; state.users = action.payload })
+      .addCase(fetchUsers.rejected, (state, action) => { state.loading = false; state.error = action.error.message ?? '加载用户列表失败' })
+
+    // fetchUserById / createUser / updateUser / removeUser / loginUser 类似处理...
+  },
 })
 
 export const {
-  setUsers, addUser, updateUser, deleteUser,
+  setUsers, addUser, updateUser: updateUserSync, deleteUser,
   setCurrentUser, clearCurrentUser,
 } = userSlice.actions
 
 export default userSlice.reducer
 ```
 
-- **`currentUser: User | null`**：当前登录用户状态片，登录成功后由 `setCurrentUser` 设置，退出登录时由 `clearCurrentUser` 清除
-- **`setUsers`**：用于加载用户列表数据（登录时批量加载、新增/编辑/删除后刷新）
-- **`clearCurrentUser`**：无 payload 的 reducer，直接设置 `currentUser = null`
+- **`createAsyncThunk`**：将异步 API 调用封装为 Redux action，自动管理 pending / fulfilled / rejected 三种状态
+- **`rejectWithValue`**：在异步操作失败时携带自定义错误信息，通过 `action.payload` 传递给 rejected reducer
+- **`extraReducers`**：处理 async thunk 的状态变化，与同步 `reducers` 分开定义
+- **命名规范**：每个 thunk 的 action type 为 `user/fetchUsers`、`user/createUser` 等，由 slice name（`user`）+ thunk name 自动拼接
+- **同步 vs 异步 reducer 区分**：`updateUser` 同步 reducer 重命名为 `updateUserSync`，避免与 `updateUser` async thunk 同名冲突
 
 #### 示例 — Store 注册
 
@@ -267,30 +322,36 @@ const users = useSelector((state: RootState) => state.user.users)
 // 读取当前登录用户
 const currentUser = useSelector((state: RootState) => state.user.currentUser)
 
-// 登录成功
-dispatch(setCurrentUser(user))
+// 使用 async thunk：获取用户列表
+await dispatch(fetchUsers()).unwrap()
 
-// 退出登录
-dispatch(clearCurrentUser())
+// 使用 async thunk：创建用户
+await dispatch(createUser({ username: 'newuser', roles: ['普通用户'] })).unwrap()
+
+// 使用 async thunk：登录
+await dispatch(loginUser({ username: 'admin', password: 'admin123' })).unwrap()
 ```
 
 #### 注意事项
 
 - `currentUser` 是 `User | null` 类型，组件中需要做空值判断：`currentUser?.username ?? '未登录'`。
 - `userSlice` 和 `timesheetSlice` 共享同一个 Store，通过不同的命名空间隔离。
-- 当前 `extraReducers` 为空。如果需要异步登录操作（如 `createAsyncThunk`），可在 `extraReducers` 中处理。
+- `createAsyncThunk` 返回的 Promise 需要使用 `.unwrap()` 才能获取 payload 或捕获错误。
+- 同步 reducer 和 async thunk 同名时，同步 reducer 需要重命名（如 `updateUserSync`）。
 
 ---
 
-### 4. 登录页重构（用户认证）
+### 4. 登录页重构（用户认证 + async thunks）
 
 #### 定义
 
-第 5 周将登录页从简单的前端校验重构为调用 `login` API 验证用户，验证成功后 `dispatch(setCurrentUser)` 保存用户信息到 Redux Store，同时加载用户列表供后续使用。
+第 5 周将登录页从简单的前端校验重构为调用 `loginUser` thunk 验证用户，验证成功后自动保存用户信息到 Redux Store，同时通过 `fetchUsers` thunk 加载用户列表供后续使用。
 
 #### 示例
 
 ```tsx
+import { loginUser, fetchUsers } from '../store/userSlice'
+
 const handleFormSubmit = async (values: LoginFormValues) => {
   const username = values.username.trim()
   const password = values.password
@@ -307,17 +368,15 @@ const handleFormSubmit = async (values: LoginFormValues) => {
   }
 
   try {
-    // 调用登录 API 验证
-    const user = await loginApi(username, password)
+    // 调用 loginUser thunk，自动处理 pending/fulfilled/rejected
+    await dispatch(loginUser({ username, password })).unwrap()
 
-    // 保存登录态 + 用户名 + 用户信息
+    // 保存登录态 + 用户名
     login()
     saveUsername(username)
-    dispatch(setCurrentUser(user))
 
-    // 登录时同时加载用户列表，避免用户管理页面首次加载时重复请求
-    const users = await getUsers()
-    dispatch(setUsers(users))
+    // 同时加载用户列表
+    await dispatch(fetchUsers()).unwrap()
 
     // 跳转到主页或原本想访问的页面
     const state = location.state as { from?: string } | null
@@ -328,9 +387,9 @@ const handleFormSubmit = async (values: LoginFormValues) => {
 }
 ```
 
-- **`loginApi`**：调用 `/users/login` API 验证用户，返回完整 `User` 对象
-- **`dispatch(setCurrentUser(user))`**：登录成功后保存用户信息到 Redux，侧边栏立即显示用户名
-- **`dispatch(setUsers(await getUsers()))`**：登录时预加载用户列表，性能优化——避免用户管理页面首次加载时重复请求
+- **`dispatch(loginUser({ username, password }))`**：调用 loginUser thunk，内部自动调用 `loginApi`，成功时 Redux 自动设置 `currentUser`
+- **`.unwrap()`**：将 thunk 返回的 Promise  unwrap 为 payload，成功时 resolve payload，失败时 reject error
+- **`dispatch(fetchUsers()).unwrap()`**：登录时预加载用户列表，避免用户管理页面首次加载时重复请求
 - **`useLayoutEffect`**：根据 URL（如 `/login/admin`）自动填充快捷登录的账号密码，使用 `useLayoutEffect` 而非 `useEffect` 确保在浏览器绘制前完成填充，避免闪烁
 
 #### 使用效果
@@ -341,29 +400,32 @@ const handleFormSubmit = async (values: LoginFormValues) => {
 #### 注意事项
 
 - 登录页的密码校验在**前端完成**（`QUICK_LOGIN_MAP`），`loginApi` 是额外的 API 调用。真实后端应将密码校验放在服务端。
-- 登录成功后同时加载用户列表（`getUsers`），这是性能优化。如果用户管理页面不常用，可改为按需加载。
+- 登录成功后同时加载用户列表（`fetchUsers`），这是性能优化。如果用户管理页面不常用，可改为按需加载。
+- `.unwrap()` 是 RTK 提供的方法，将 thunk 的 fulfilled action 的 payload 提取出来。如果不使用 `.unwrap()`，需要通过 `then((action) => action.payload)` 访问 payload。
 
 ---
 
-### 5. 用户列表页：前端分页 + 查询过滤
+### 5. 用户列表页：前端分页 + 查询过滤 + async thunks
 
 #### 定义
 
-用户列表页使用前端分页（`Array.slice` 切片）+ 本地查询过滤（`filtered` 状态），与工时列表页的分页逻辑类似，但增加了查询过滤与 Redux 状态的协调。
+用户列表页使用前端分页（`Array.slice` 切片）+ 本地查询过滤（`filtered` 状态），与工时列表页的分页逻辑类似，但增加了查询过滤与 Redux 状态的协调。数据加载通过 `fetchUsers` thunk 完成，删除操作通过 `removeUser` thunk 完成。
 
 #### 示例
 
 ```tsx
+import { fetchUsers, removeUser } from '../store/userSlice'
+
 function UserListPage() {
-  const { users, loading } = useSelector((state: RootState) => state.user)
+  const { users, loading, error } = useSelector((state: RootState) => state.user)
   const dispatch = useDispatch<AppDispatch>()
 
-  // 挂载时加载用户数据
+  // 挂载时通过 thunk 加载用户数据
   useEffect(() => {
     if (users.length === 0 && !loading) {
-      getUsers().then((data) => dispatch(setUsers(data)))
+      dispatch(fetchUsers())
     }
-  }, [])
+  }, [dispatch, users.length, loading])
 
   // 查询结果保存在本地 state：null 表示未过滤，显示 Store 全量
   const [filtered, setFiltered] = useState<User[] | null>(null)
@@ -393,15 +455,14 @@ function UserListPage() {
     []
   )
 
-  // 删除用户：同时更新 filtered 保持查询状态同步
+  // 删除用户：通过 removeUser thunk 异步删除
   const handleDelete = useCallback(
     async (id: string) => {
-      dispatch(deleteUser(id))
+      await dispatch(removeUser(id))
       message.success('删除成功')
       setFiltered((prev) => {
         if (!prev) return prev
         const newFiltered = prev.filter((u) => u.id !== id)
-        // 删除当前页最后一条记录时自动跳转到上一页
         if (newFiltered.length > 0) {
           const newTotalPages = Math.ceil(newFiltered.length / pageSize)
           if (currentPage > newTotalPages) {
@@ -416,6 +477,8 @@ function UserListPage() {
 }
 ```
 
+- **`dispatch(fetchUsers())`**：通过 thunk 加载用户列表，自动处理 loading 和 error 状态
+- **`dispatch(removeUser(id))`**：通过 thunk 异步删除用户，成功后自动从 `state.users` 中移除，无需手动 dispatch `deleteUser`
 - **`filtered ?? users`**：查询结果优先于 Store 全量。`null` 表示未查询，`User[]` 表示查询结果
 - **`filtered` 使用本地 state 而非 Redux**：查询是局部状态，不影响全局用户列表
 - **删除后页码调整**：删除当前页最后一条记录时自动跳转到上一页，避免空页
@@ -428,38 +491,90 @@ function UserListPage() {
 #### 注意事项
 
 - 前端分页适用于数据量小的场景（当前 mock 数据仅 3 条）。如果数据量大，应改为服务端分页。
-- 删除操作先 dispatch `deleteUser` 更新 Redux，再手动更新 `filtered` 保持查询状态同步。
+- 删除操作通过 `removeUser` thunk 完成，包含完整的错误处理（`rejectWithValue`），删除失败时 Redux 的 `error` 会被设置。
 
 ---
 
-### 6. 用户新增/编辑页：动态 import
+### 6. 用户新增/编辑页：Redux 缓存 + async thunks
 
 #### 定义
 
-用户新增页和编辑页使用 `await import('../api/timeEntryApi')` 动态导入 API 模块，实现代码分割。
+用户新增页和编辑页的核心改进有两点：
+1. **新增页**：使用 `createUser` thunk 替代「调用 API + 全量刷新列表」的模式，创建成功后 Redux 自动将新用户插入 `state.users` 数组
+2. **编辑/详情页**：优先从 Redux 缓存读取用户数据（`users.find`），缓存未命中时 dispatch `fetchUserById` 发起请求，避免重复 API 调用
 
-#### 示例
+#### 示例 — UserCreatePage.tsx
 
 ```tsx
-// UserCreatePage.tsx
-const handleSubmit = async (data: { username: string; roles: User['roles'] }) => {
-  // 动态 import：只在提交时加载 API 模块
-  const { addUser: addUserApi } = await import('../api/timeEntryApi')
-  await addUserApi(data)
-  const { getUsers } = await import('../api/timeEntryApi')
-  dispatch(setUsers(await getUsers()))
-  navigate('/users')
+import { createUser } from '../store/userSlice'
+
+function UserCreatePage() {
+  const dispatch = useDispatch<AppDispatch>()
+  const navigate = useNavigate()
+
+  // 提交新增：通过 createUser thunk 创建用户，成功后自动更新 Store
+  const handleSubmit = async (data: { username: string; roles: User['roles'] }) => {
+    await dispatch(createUser(data))
+    navigate('/users')
+  }
+
+  return (
+    <div className={styles.page}>
+      <UserForm onSubmit={handleSubmit} />
+    </div>
+  )
 }
 ```
 
+- **`dispatch(createUser(data))`**：创建用户后，`extraReducers` 中的 `createUser.fulfilled` 自动将新用户 `unshift` 到 `state.users`，无需手动 `setUsers(await getUsers())`
+- **对比之前**：旧方案需要 `addUserApi(data)` → `getUsers()` → `setUsers(data)` 三步，新方案只需一步
+
+#### 示例 — UserDetailPage.tsx / UserEditPage.tsx
+
+```tsx
+import { fetchUserById } from '../store/userSlice'
+
+function UserDetailPage() {
+  const { id } = useParams()
+  const dispatch = useDispatch<AppDispatch>()
+  const { users, loading, error } = useSelector((state: RootState) => state.user)
+
+  // 从 Redux Store 中查找用户（缓存命中）
+  const cachedUser = users.find((u) => u.id === id)
+  const [user, setUser] = useState<User | null>(cachedUser ?? null)
+
+  // 挂载时：如果缓存中没有，则发起请求
+  useEffect(() => {
+    if (!id) return
+    if (!cachedUser) {
+      dispatch(fetchUserById(id))
+    }
+  }, [id, cachedUser, dispatch])
+
+  // 如果缓存未命中且 thunk 已加载完成，从 users 中更新
+  useEffect(() => {
+    if (cachedUser && !user) {
+      setUser(cachedUser)
+    }
+  }, [cachedUser, user])
+
+  // 加载中 / 加载失败 / 用户不存在 的三态处理...
+}
+```
+
+- **`users.find((u) => u.id === id)`**：优先从 Redux 缓存读取，避免重复 API 调用
+- **`dispatch(fetchUserById(id))`**：缓存未命中时发起请求，`extraReducers` 自动处理 loading 和 error
+- **两个 useEffect**：第一个在挂载时判断是否需要请求，第二个在缓存就绪后更新本地 state
+
 #### 使用效果
 
-Vite 打包时，`timeEntryApi` 会被拆分为独立的 chunk 文件。新增页和编辑页按需加载该 chunk，减少首屏加载体积。
+- 新增用户：提交后 Redux 自动更新列表，导航回列表页时直接显示新用户
+- 编辑/详情页：如果用户列表已在 Store 中（如登录后预加载），无需额外 API 请求
 
 #### 注意事项
 
-- 动态 import 返回 Promise，需要使用 `await` 获取模块。
-- 学习项目中 API 模块体积小，代码分割收益不明显。生产环境中对路由级组件使用动态 import 收益更大。
+- 缓存策略的前提是用户列表已加载。如果用户列表未加载，详情页/编辑页仍会发起 API 请求。
+- 编辑成功后，`updateUser` thunk 的 `fulfilled` reducer 会自动更新 `state.users` 中的对应用户。
 
 ---
 
@@ -545,7 +660,7 @@ function AppLayout() {
 |------|---------|---------|
 | TypeScript 类型定义 | `User` / `UserRole` / `UserQuery` | ✅ 联合类型、数组类型字段 |
 | Mock 数据与 API 层 | 用户 CRUD + 登录 API | ✅ 3 条默认用户 + 7 个 API 函数 |
-| Redux 多 Slice 管理 | `userSlice` + Store 注册 | ✅ `userSlice.ts` 6 个 reducers + `index.ts` 注册 |
+| Redux 多 Slice 管理 | `userSlice` + Store 注册 | ✅ `userSlice.ts` 6 个 sync reducers + 6 个 async thunks + `index.ts` 注册 |
 | 用户 CRUD 页面 | 前端分页 + 查询过滤 + 三态处理 | ✅ `UserListPage` / `UserDetailPage` / `UserCreatePage` / `UserEditPage` |
 | 登录页重构 | 用户认证 + Redux 用户信息 | ✅ `login` API + `dispatch(setCurrentUser)` | ✅ 登录时预加载用户列表 |
 | 侧边栏导航 | 「用户管理」菜单项 + 用户名显示 | ✅ `UserOutlined` 菜单项 + `currentUser?.username` |
@@ -558,7 +673,7 @@ function AppLayout() {
 | ① 用户类型定义 | ✅ `User` / `UserRole` / `UserQuery` |
 | ② Mock 数据（3 条默认用户） | ✅ `admin/admin123`、`user1/user123`、`user2/user123` |
 | ③ API 层扩展（7 个函数） | ✅ `login` / `getUsers` / `queryUsers` / `getUserById` / `addUser` / `updateUser` / `deleteUser` |
-| ④ Redux userSlice | ✅ 6 个 reducers：`setUsers` / `addUser` / `updateUser` / `deleteUser` / `setCurrentUser` / `clearCurrentUser` |
+| ④ Redux userSlice | ✅ 6 个 sync reducers + 6 个 async thunks：`fetchUsers` / `fetchUserById` / `createUser` / `updateUser` / `removeUser` / `loginUser` |
 | ⑤ Store 注册 user reducer | ✅ `user: userReducer` |
 | ⑥ 用户 CRUD 页面 | ✅ 4 个页面，三态处理 + 前端分页 |
 | ⑦ 登录页重构 | ✅ `login` API + `dispatch(setCurrentUser)` + 用户列表预加载 |

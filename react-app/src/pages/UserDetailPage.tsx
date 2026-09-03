@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Tag } from 'antd'
-import { getUserById } from '../api/timeEntryApi'
+import { useSelector, useDispatch } from 'react-redux'
+import { Tag, Space } from 'antd'
+import type { RootState, AppDispatch } from '../store'
+import { fetchUserById } from '../store/userSlice'
 import type { User } from '../types/timeEntry'
 import styles from './UserDetailPage.module.css'
 
@@ -23,34 +25,52 @@ const formatDate = (iso: string) => {
   })
 }
 
-// 用户详情页：按路由标识经请求模块加载单条用户记录
+// 用户详情页：优先从 Redux 缓存读取，未命中则 dispatch fetchUserById
 function UserDetailPage() {
   const { id } = useParams()
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const dispatch = useDispatch<AppDispatch>()
+  const { users, loading, error } = useSelector((state: RootState) => state.user)
 
-  // 挂载时经请求模块按 id 加载用户
+  // 从 Redux Store 中查找用户（缓存命中）
+  const cachedUser = users.find((u) => u.id === id)
+  const [user, setUser] = useState<User | null>(cachedUser ?? null)
+
+  // 挂载时：如果缓存中没有，则发起请求
   useEffect(() => {
     if (!id) return
-    setLoading(true)
-    setError(null)
-    getUserById(id)
-      .then((data) => setUser(data))
-      .catch((err) => setError(err instanceof Error ? err.message : '加载失败'))
-      .finally(() => setLoading(false))
-  }, [id])
+    if (!cachedUser) {
+      dispatch(fetchUserById(id))
+    }
+  }, [id, cachedUser, dispatch])
+
+  // 如果缓存未命中且 thunk 已加载完成，从 users 中更新
+  useEffect(() => {
+    if (cachedUser && !user) {
+      setUser(cachedUser)
+    }
+  }, [cachedUser, user])
 
   // 加载中不判定「用户不存在」，等数据就绪后再判断
-  if (loading) {
+  if (loading && !user) {
     return <p className={styles.status}>加载中...</p>
   }
 
   // 加载失败或用户不存在时显示提示 + 返回列表入口
-  if (error || !user) {
+  if (error && !user) {
     return (
       <div className={styles.status}>
-        <p className={styles.errorText}>{error === '用户不存在' ? '未找到该用户' : '加载失败'}</p>
+        <p className={styles.errorText}>加载失败</p>
+        <Link to="/users" className={styles.backLink}>
+          返回列表
+        </Link>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className={styles.status}>
+        <p className={styles.errorText}>未找到该用户</p>
         <Link to="/users" className={styles.backLink}>
           返回列表
         </Link>
@@ -70,7 +90,11 @@ function UserDetailPage() {
       <div className={styles.field}>
         <label className={styles.label}>角色</label>
         <div className={styles.value}>
-          <Tag color={roleColor[user.roles[0]]}>{user.roles[0]}</Tag>
+          <Space size="small">
+            {user.roles.map((role) => (
+              <Tag key={role} color={roleColor[role]}>{role}</Tag>
+            ))}
+          </Space>
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import type { AppDispatch } from '../store'
-import { setUsers } from '../store/userSlice'
+import { createUser } from '../store/userSlice'
 import UserForm from '../components/timesheet/UserForm'
 import type { User } from '../types/timeEntry'
 import styles from './UserCreatePage.module.css'
@@ -11,14 +11,9 @@ function UserCreatePage() {
   const dispatch = useDispatch<AppDispatch>()
   const navigate = useNavigate()
 
-  // 提交新增：通过 API 新增用户，成功后刷新列表
+  // 提交新增：通过 createUser thunk 创建用户，成功后自动更新 Store
   const handleSubmit = async (data: { username: string; roles: User['roles'] }) => {
-    // 调用 API 新增用户（mock 层会生成 id 和 createdAt）
-    const { addUser: addUserApi } = await import('../api/timeEntryApi')
-    await addUserApi(data)
-    // 新增成功后从 Store 重新加载最新数据
-    const { getUsers } = await import('../api/timeEntryApi')
-    dispatch(setUsers(await getUsers()))
+    await dispatch(createUser(data))
     navigate('/users')
   }
 

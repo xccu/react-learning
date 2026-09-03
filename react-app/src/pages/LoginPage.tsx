@@ -4,8 +4,7 @@ import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import type { AppDispatch } from '../store'
-import { login as loginApi, getUsers } from '../api/timeEntryApi'
-import { setCurrentUser, setUsers } from '../store/userSlice'
+import { loginUser, fetchUsers } from '../store/userSlice'
 import { login, saveUsername } from '../utils/auth'
 import styles from './LoginPage.module.css'
 
@@ -69,17 +68,15 @@ function LoginPage() {
     }
 
     try {
-      // 调用登录接口验证用户名+密码
-      const user = await loginApi(username, password)
+      // 调用 login thunk，自动处理 pending/fulfilled/rejected
+      const result = await dispatch(loginUser({ username, password })).unwrap()
       
-      // 验证成功：保存登录态 + 用户名 + 用户信息
+      // 验证成功：保存登录态 + 用户名
       login()
       saveUsername(username)
-      dispatch(setCurrentUser(user))
       
       // 同时加载用户列表
-      const users = await getUsers()
-      dispatch(setUsers(users))
+      await dispatch(fetchUsers()).unwrap()
       
       // 跳转到主页或原本想访问的页面
       const state = location.state as { from?: string } | null

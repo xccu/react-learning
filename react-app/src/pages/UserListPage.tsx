@@ -2,12 +2,12 @@ import { useState, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import type { RootState, AppDispatch } from '../store'
-import { deleteUser, setUsers } from '../store/userSlice'
+import { fetchUsers, removeUser } from '../store/userSlice'
 import { Table, Tag, Popconfirm, message, Space, Button, Pagination } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import UserQueryForm from '../components/timesheet/UserQueryForm'
 import type { User } from '../types/timeEntry'
-import { getUsers, queryUsers } from '../api/timeEntryApi'
+import { queryUsers } from '../api/timeEntryApi'
 import styles from './UserListPage.module.css'
 
 // 角色颜色映射
@@ -30,20 +30,16 @@ const formatDate = (iso: string) => {
 
 // 用户列表页：使用 Ant Design Table 展示用户
 function UserListPage() {
-  const { users, loading } = useSelector((state: RootState) => state.user)
+  const { users, loading, error } = useSelector((state: RootState) => state.user)
   const dispatch = useDispatch<AppDispatch>()
   const navigate = useNavigate()
 
   // 挂载时加载用户数据
   useEffect(() => {
     if (users.length === 0 && !loading) {
-      getUsers().then((data) => {
-        dispatch(setUsers(data))
-      }).catch(() => {
-        // 加载失败不影响使用
-      })
+      dispatch(fetchUsers())
     }
-  }, [])
+  }, [dispatch, users.length, loading])
 
   // 查询结果保存在本地 state：null 表示未过滤，显示 Store 全量
   const [filtered, setFiltered] = useState<User[] | null>(null)
@@ -78,10 +74,10 @@ function UserListPage() {
     navigate('/users/create')
   }, [navigate])
 
-  // 删除用户：二次确认后 dispatch deleteUser
+  // 删除用户：二次确认后 dispatch removeUser thunk
   const handleDelete = useCallback(
     async (id: string) => {
-      dispatch(deleteUser(id))
+      await dispatch(removeUser(id))
       message.success('删除成功')
       // 处于查询过滤状态时同步移除已删除记录
       setFiltered((prev) => {
@@ -151,6 +147,8 @@ function UserListPage() {
 
       {loading ? (
         <p className={styles.status}>加载中...</p>
+      ) : error ? (
+        <p className={styles.status}>加载失败：{error}</p>
       ) : (
         <>
           {/* 使用 Ant Design Table 渲染列表 */}
