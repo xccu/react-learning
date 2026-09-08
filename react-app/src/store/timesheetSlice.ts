@@ -52,6 +52,14 @@ const timesheetSlice = createSlice({
         entry.rejectReason = action.payload.reason
       }
     },
+    // 重新提交审批
+    submitEntry(state, action: PayloadAction<string>) {
+      const entry = state.entries.find((e) => e.id === action.payload)
+      if (entry) {
+        entry.approvalStatus = '待审批'
+        entry.rejectReason = undefined
+      }
+    },
   },
 })
 
@@ -62,6 +70,7 @@ export const {
   deleteEntry,
   approveEntry,
   rejectEntry,
+  submitEntry,
 } = timesheetSlice.actions
 
 export default timesheetSlice.reducer

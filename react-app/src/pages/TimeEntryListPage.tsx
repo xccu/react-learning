@@ -352,6 +352,8 @@ function TimeEntryListPage() {
         onOk={handleRejectSubmit}
         onCancel={closeRejectModal}
         destroyOnHidden
+        okText="确定"
+        cancelText="取消"
       >
         <Form form={rejectForm} layout="vertical">
           <Form.Item

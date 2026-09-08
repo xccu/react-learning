@@ -1,6 +1,6 @@
 // 【Ant Design Form】使用 Form.useForm 管理表单，替代 React Hook Form
 import { useEffect } from 'react'
-import { Form, Input, Button, Select } from 'antd'
+import { Form, Input, Button, Select, Alert } from 'antd'
 import type { TimeEntry, ApprovalStatus } from '../../types/timeEntry'
 import styles from './TimeEntryForm.module.css'
 
@@ -10,6 +10,7 @@ interface TimeEntryFormProps {
   initialData?: TimeEntry | null
   onCancel?: () => void
   showApprovalStatus?: boolean
+  isRejected?: boolean
 }
 
 // 审批状态下拉选项
@@ -19,7 +20,7 @@ const STATUS_OPTIONS: { value: ApprovalStatus; label: string }[] = [
   { value: '已驳回', label: '已驳回' },
 ]
 
-function TimeEntryForm({ onSubmit, initialData, onCancel, showApprovalStatus }: TimeEntryFormProps) {
+function TimeEntryForm({ onSubmit, initialData, onCancel, showApprovalStatus, isRejected }: TimeEntryFormProps) {
   // Ant Design Form 实例
   const [form] = Form.useForm<Omit<TimeEntry, 'id' | 'createdAt'>>()
 
@@ -57,6 +58,15 @@ function TimeEntryForm({ onSubmit, initialData, onCancel, showApprovalStatus }: 
   return (
     <div className={styles.form}>
       <h2 className={styles.formTitle}>{initialData ? '编辑工时' : '新增工时'}</h2>
+
+      {isRejected && (
+        <Alert
+          message="此工时已被驳回，保存后将重新提交审批"
+          type="warning"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+      )}
 
       <Form form={form} layout="vertical">
         {/* 项目名称 */}
@@ -124,7 +134,7 @@ function TimeEntryForm({ onSubmit, initialData, onCancel, showApprovalStatus }: 
               onClick={handleFormSubmit}
               loading={false}
             >
-              {initialData ? '保存修改' : '提交'}
+              {initialData && isRejected ? '保存并重新提交' : initialData ? '保存修改' : '提交'}
             </Button>
             {onCancel && (
               <Button onClick={onCancel}>取消</Button>

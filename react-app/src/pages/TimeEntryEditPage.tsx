@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import type { RootState, AppDispatch } from '../store'
 import { getEntryById } from '../api/timeEntryApi'
-import { updateEntry, setEntries } from '../store/timesheetSlice'
+import { updateEntry, submitEntry, setEntries } from '../store/timesheetSlice'
 import TimeEntryForm from '../components/timesheet/TimeEntryForm'
 import type { TimeEntry } from '../types/timeEntry'
 import styles from './TimeEntryDetailPage.module.css'
@@ -47,13 +47,18 @@ function TimeEntryEditPage() {
 
   // 提交修改：dispatch updateEntry 后返回列表页
   const handleSubmit = async (data: Omit<TimeEntry, 'id' | 'createdAt'>) => {
-    dispatch(updateEntry({ ...entry, ...data, hours: Number(data.hours) }))
+    const isRejected = entry.approvalStatus === '已驳回'
+    if (isRejected) {
+      dispatch(submitEntry(entry.id))
+    }
+    const { approvalStatus, ...updateData } = data
+    dispatch(updateEntry({ ...entry, ...updateData, hours: Number(data.hours), approvalStatus: isRejected ? '待审批' : entry.approvalStatus, ...(isRejected && { rejectReason: undefined }) }))
     navigate('/')
   }
 
   return (
     <div>
-      <TimeEntryForm onSubmit={handleSubmit} initialData={entry} onCancel={() => navigate('/')} />
+      <TimeEntryForm onSubmit={handleSubmit} initialData={entry} onCancel={() => navigate('/')} isRejected={entry.approvalStatus === '已驳回'} />
     </div>
   )
 }

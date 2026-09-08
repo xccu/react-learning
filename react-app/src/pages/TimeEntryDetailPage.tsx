@@ -120,13 +120,6 @@ function TimeEntryDetailPage() {
           </>
         )}
 
-        {/* 已驳回时显示重填入口 */}
-        {entry.approvalStatus === '已驳回' && (
-          <Link to="edit" className={styles.submitBtn}>
-            重填
-          </Link>
-        )}
-
         {/* 编辑按钮（所有状态都显示） */}
         <Link to="edit" className={styles.editBtn}>
           编辑
