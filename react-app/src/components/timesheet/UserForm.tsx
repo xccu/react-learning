@@ -1,42 +1,34 @@
-// 【Ant Design Form】使用 Form.useForm 管理用户表单
 import { useEffect } from 'react'
-import { Form, Input, Button, Select } from 'antd'
-import type { User, UserRole } from '../../types/timeEntry'
-import styles from './TimeEntryForm.module.css'
+import { Form, Input, Select, Button } from 'antd'
+import type { User } from '../../types/timeEntry'
+import styles from './UserForm.module.css'
 
-// 表单 Props：接收 onSubmit 回调和可选的 initialData（编辑模式）
 interface UserFormProps {
-  onSubmit: (values: { username: string; roles: UserRole[] }) => Promise<void>
+  onSubmit: (values: { username: string; password?: string; roles: string[] }) => Promise<void>
   initialData?: User | null
   onCancel?: () => void
+  roles: { value: string; label: string }[]
 }
 
-// 角色下拉选项
-const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
-  { value: '管理员', label: '管理员' },
-  { value: '普通用户', label: '普通用户' },
-]
+function UserForm({ onSubmit, initialData, onCancel, roles }: UserFormProps) {
+  const [form] = Form.useForm<{ username: string; password?: string; roles: string[] }>()
 
-function UserForm({ onSubmit, initialData, onCancel }: UserFormProps) {
-  // Ant Design Form 实例
-  const [form] = Form.useForm<{ username: string; roles: UserRole[] }>()
-
-  // 编辑模式：initialData 变化时用 setFieldsValue 预填
   useEffect(() => {
     if (initialData) {
       form.setFieldsValue({
         username: initialData.username,
+        password: '',
         roles: initialData.roles,
       })
     } else {
       form.setFieldsValue({
         username: '',
+        password: 'Pass@word0',
         roles: [],
       })
     }
   }, [initialData, form])
 
-  // 表单提交：validateFields 校验通过后回调
   const handleFormSubmit = async () => {
     try {
       const values = await form.validateFields()
@@ -44,8 +36,8 @@ function UserForm({ onSubmit, initialData, onCancel }: UserFormProps) {
       if (!initialData) {
         form.resetFields()
       }
-    } catch {
-      // 校验失败不处理
+    } catch (err) {
+      console.error('Form validation failed:', err)
     }
   }
 
@@ -54,7 +46,6 @@ function UserForm({ onSubmit, initialData, onCancel }: UserFormProps) {
       <h2 className={styles.formTitle}>{initialData ? '编辑用户' : '新增用户'}</h2>
 
       <Form form={form} layout="vertical">
-        {/* 用户名 */}
         <Form.Item
           name="username"
           label="用户名"
@@ -63,7 +54,16 @@ function UserForm({ onSubmit, initialData, onCancel }: UserFormProps) {
           <Input placeholder="请输入用户名" disabled={!!initialData} />
         </Form.Item>
 
-        {/* 角色 */}
+        {!initialData && (
+          <Form.Item
+            name="password"
+            label="密码"
+            rules={[{ required: true, message: '请输入密码' }]}
+          >
+            <Input.Password placeholder="请输入密码" />
+          </Form.Item>
+        )}
+
         <Form.Item
           name="roles"
           label="角色"
@@ -73,11 +73,10 @@ function UserForm({ onSubmit, initialData, onCancel }: UserFormProps) {
             mode="multiple"
             allowClear
             placeholder="请选择角色"
-            options={ROLE_OPTIONS}
+            options={roles}
           />
         </Form.Item>
 
-        {/* 按钮组 */}
         <Form.Item>
           <div className={styles.buttonGroup}>
             <Button

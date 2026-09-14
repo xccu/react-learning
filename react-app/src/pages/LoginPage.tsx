@@ -2,40 +2,24 @@ import { useLayoutEffect } from 'react'
 import { Form, Input, Button, Card, message } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch } from '../store'
-import { loginUser, fetchUsers } from '../store/userSlice'
-import { login, saveUsername } from '../utils/auth'
+import { loginUser, fetchUsers, fetchRoles } from '../store/userSlice'
+import { login, saveUsername, savePermissions } from '../utils/auth'
 import styles from './LoginPage.module.css'
 
-// 快捷登录账号密码映射
 const QUICK_LOGIN_MAP: Record<string, string> = {
-  admin: 'admin123',
-  user1: 'user123',
-  user2: 'user123',
+  Administrator: 'Pass@word0',
+  ProjectManager: 'Pass@word0',
+  User: 'Pass@word0',
 }
 
-// 快捷登录账号列表
-const QUICK_LOGIN_USERS: { username: string; label: string }[] = [
-  { username: 'admin', label: '管理员' },
-  { username: 'user1', label: '普通用户' },
-  { username: 'user2', label: '普通用户' },
-]
-
-// 登录表单字段结构
-interface LoginFormValues {
-  username: string
-  password: string
-}
-
-// 登录页：Form + Input + Card + 用户认证
 function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const dispatch = useDispatch<AppDispatch>()
-  const [form] = Form.useForm<LoginFormValues>()
+  const [form] = Form.useForm<{ username: string; password: string }>()
 
-  // 根据 URL 自动填充对应账号的密码
   useLayoutEffect(() => {
     const path = location.pathname
     if (path.startsWith('/login/')) {
@@ -47,49 +31,31 @@ function LoginPage() {
     }
   }, [location.pathname, form])
 
-  const handleFormSubmit = async (values: LoginFormValues) => {
-    // 先校验用户名密码是否正确
+  const handleFormSubmit = async (values: { username: string; password: string }) => {
     const username = values.username.trim()
     const password = values.password
-    const expectedPassword = QUICK_LOGIN_MAP[username]
-    if (!expectedPassword) {
-      form.setFields([
-        { name: 'username', errors: ['用户名不存在'] },
-        { name: 'password', errors: [] },
-      ])
-      return
-    }
-    if (password !== expectedPassword) {
-      form.setFields([
-        { name: 'username', errors: [] },
-        { name: 'password', errors: ['密码错误'] },
-      ])
-      return
-    }
 
     try {
-      // 调用 login thunk，自动处理 pending/fulfilled/rejected
       const result = await dispatch(loginUser({ username, password })).unwrap()
-      
-      // 验证成功：保存登录态 + 用户名
+
       login()
       saveUsername(username)
-      
-      // 同时加载用户列表
-      await dispatch(fetchUsers()).unwrap()
-      
-      // 跳转到主页或原本想访问的页面
+
+      const fetchedUsers = await dispatch(fetchUsers()).unwrap()
+      const fetchedRoles = await dispatch(fetchRoles()).unwrap()
+
+      const currentUser = fetchedUsers.find((u) => u.username === username)
+      const permissions = currentUser?.roles.flatMap((roleName) => {
+        const role = fetchedRoles.find((r) => r.name === roleName)
+        return role ? role.permissions : []
+      }) ?? []
+      savePermissions(permissions)
+
       const state = location.state as { from?: string } | null
       navigate(state?.from ?? '/', { replace: true })
     } catch (err) {
-      // 验证失败：提示错误
       message.error(err instanceof Error ? err.message : '登录失败')
     }
-  }
-
-  // 快捷登录：自动填充用户名和密码
-  const handleQuickLogin = (username: string, password: string) => {
-    form.setFieldsValue({ username, password })
   }
 
   return (
@@ -136,11 +102,11 @@ function LoginPage() {
         </Form>
         <div className={styles.quickLogin}>
           <span className={styles.quickLoginLabel}>快捷登录：</span>
-          <Link to="/login/admin" className={styles.quickLoginLink}>admin</Link>
+          <Link to="/login/Administrator" className={styles.quickLoginLink}>Administrator</Link>
           <span className={styles.quickLoginSep}>/</span>
-          <Link to="/login/user1" className={styles.quickLoginLink}>user1</Link>
+          <Link to="/login/ProjectManager" className={styles.quickLoginLink}>ProjectManager</Link>
           <span className={styles.quickLoginSep}>/</span>
-          <Link to="/login/user2" className={styles.quickLoginLink}>user2</Link>
+          <Link to="/login/User" className={styles.quickLoginLink}>User</Link>
         </div>
       </Card>
     </div>

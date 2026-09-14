@@ -4,16 +4,22 @@ import { useSelector, useDispatch } from 'react-redux'
 import type { RootState, AppDispatch } from '../store'
 import { fetchUsers, removeUser } from '../store/userSlice'
 import { Table, Tag, Popconfirm, message, Space, Button, Pagination } from 'antd'
+import { UserOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
+import Header from '../components/timesheet/Header'
 import UserQueryForm from '../components/timesheet/UserQueryForm'
 import type { User } from '../types/timeEntry'
 import { queryUsers } from '../api/timeEntryApi'
+import usePermission from '../hooks/usePermission'
 import styles from './UserListPage.module.css'
 
 // 角色颜色映射
 const roleColor: Record<string, string> = {
   '管理员': 'blue',
   '普通用户': 'green',
+  'Administrator': 'blue',
+  'ProjectManager': 'purple',
+  'User': 'green',
 }
 
 // 格式化时间
@@ -33,6 +39,8 @@ function UserListPage() {
   const { users, loading, error } = useSelector((state: RootState) => state.user)
   const dispatch = useDispatch<AppDispatch>()
   const navigate = useNavigate()
+  const hasWritePermission = usePermission('User.Write')
+  const hasReadPermission = usePermission('User.Read')
 
   // 挂载时加载用户数据
   useEffect(() => {
@@ -61,7 +69,7 @@ function UserListPage() {
       if (!username && !role) {
         setFiltered(null)
       } else {
-        setFiltered(await queryUsers(query))
+        setFiltered(await queryUsers(query as any))
       }
       // 查询条件变化时重置 currentPage 为 1
       setCurrentPage(1)
@@ -110,7 +118,7 @@ function UserListPage() {
       render: (roles: string[]) => (
         <Space size="small">
           {roles.map((role) => (
-            <Tag key={role} color={roleColor[role]}>{role}</Tag>
+            <Tag key={role} color={roleColor[role] || 'default'}>{role}</Tag>
           ))}
         </Space>
       ),
@@ -126,16 +134,22 @@ function UserListPage() {
       key: 'action',
       render: (_, record) => (
         <Space size="small">
-          <Button size="small" onClick={() => navigate(`/users/${record.id}`)}>详情</Button>
-          <Button size="small" onClick={() => navigate(`/users/${record.id}/edit`)}>编辑</Button>
-          <Popconfirm
-            title="确定删除该用户吗？"
-            okText="删除"
-            cancelText="取消"
-            onConfirm={() => handleDelete(record.id)}
-          >
-            <Button danger size="small">删除</Button>
-          </Popconfirm>
+          {hasReadPermission && (
+            <Button size="small" onClick={() => navigate(`/users/${record.id}`)}>详情</Button>
+          )}
+          {hasWritePermission && (
+            <Button size="small" onClick={() => navigate(`/users/${record.id}/edit`)}>编辑</Button>
+          )}
+          {hasWritePermission && (
+            <Popconfirm
+              title="确定删除该用户吗？"
+              okText="删除"
+              cancelText="取消"
+              onConfirm={() => handleDelete(record.id)}
+            >
+              <Button danger size="small">删除</Button>
+            </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -143,7 +157,8 @@ function UserListPage() {
 
   return (
     <div>
-      <UserQueryForm onQuery={handleQuery} onCreate={handleCreate} />
+      <Header title="用户管理" icon={<UserOutlined />} />
+      <UserQueryForm onQuery={handleQuery} onCreate={hasWritePermission ? handleCreate : (() => { })} showCreate={hasWritePermission} />
 
       {loading ? (
         <p className={styles.status}>加载中...</p>

@@ -16,17 +16,23 @@ httpClient.interceptors.request.use((config) => {
   return config
 })
 
-// 响应拦截器：401 清除登录态并跳转登录页；业务错误抛出可展示的 Error
+// 响应拦截器：401 清除登录态并跳转登录页；403 跳转 403 页面；业务错误抛出可展示的 Error
 httpClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // 【TypeScript 可选链】error.response 不存在时 status 为 undefined，不触发 401 分支
+    // 【TypeScript 可选链】error.response 不存在时 status 为 undefined，不触发 401/403 分支
     const status: number | undefined = error.response?.status
     if (status === 401) {
       logout()
       // 已在登录页时不重复跳转
       if (!window.location.pathname.startsWith('/login')) {
         window.location.href = '/login'
+      }
+    }
+    if (status === 403) {
+      // 无权限时跳转 403 页面
+      if (!window.location.pathname.startsWith('/unauthorized')) {
+        window.location.href = '/unauthorized'
       }
     }
     // 优先使用响应体中的 message，其次使用 axios 原始错误信息

@@ -1,6 +1,6 @@
 // 【数据请求模块】页面统一经 HTTP 请求实例访问工时数据，签名与 mockApi 保持一致
 import httpClient from './httpClient'
-import type { TimeEntry } from '../types/timeEntry'
+import type { TimeEntry, Role } from '../types/timeEntry'
 import type { TimeEntryQuery, User, UserQuery } from './mockApi'
 
 // 获取所有工时记录
@@ -106,4 +106,35 @@ export async function deleteUser(id: string): Promise<void> {
 export async function login(username: string, password: string): Promise<User> {
   const { data } = await httpClient.post<User>('/users/login', { username, password })
   return data
+}
+
+// ========== 角色模块 ==========
+
+// 获取所有角色
+export async function getRoles(): Promise<Role[]> {
+  const { data } = await httpClient.get<Role[]>('/roles')
+  return data
+}
+
+// 获取单个角色
+export async function getRoleById(id: string): Promise<Role> {
+  const { data } = await httpClient.get<Role>(`/roles/${id}`)
+  return data
+}
+
+// 创建角色
+export async function createRole(role: Omit<Role, 'id'>): Promise<Role> {
+  const { data } = await httpClient.post<Role>('/roles', role)
+  return data
+}
+
+// 更新角色
+export async function updateRole(id: string, updates: Partial<Omit<Role, 'id'>>): Promise<Role> {
+  const { data } = await httpClient.put<Role>(`/roles/${id}`, updates)
+  return data
+}
+
+// 删除角色
+export async function deleteRole(id: string): Promise<void> {
+  await httpClient.delete(`/roles/${id}`)
 }

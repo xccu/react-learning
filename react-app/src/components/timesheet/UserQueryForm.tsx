@@ -1,7 +1,8 @@
 // 【Ant Design】用户查询表单：Form.useForm 管理查询条件字段
 import { Form, Input, Select, Button, Space } from 'antd'
-import type { UserQuery, UserRole } from '../../api/mockApi'
-import styles from './TimeEntryQueryForm.module.css'
+import type { UserQuery } from '../../types/timeEntry'
+import type { UserRole } from '../../types/timeEntry'
+import styles from './UserQueryForm.module.css'
 
 interface UserQueryFormProps {
   onQuery: (query: UserQuery) => void
@@ -9,10 +10,11 @@ interface UserQueryFormProps {
 }
 
 // 角色下拉选项
-const ROLE_OPTIONS: { value: UserRole | undefined; label: string }[] = [
+const ROLE_OPTIONS: { value: string | undefined; label: string }[] = [
   { value: undefined, label: '全部' },
-  { value: '管理员', label: '管理员' },
-  { value: '普通用户', label: '普通用户' },
+  { value: 'Administrator', label: '管理员' },
+  { value: 'ProjectManager', label: '项目经理' },
+  { value: 'User', label: '普通用户' },
 ]
 
 function UserQueryForm({ onQuery, onCreate }: UserQueryFormProps) {

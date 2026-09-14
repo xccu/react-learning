@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux'
 import type { AppDispatch } from '../store'
 import { addEntry } from '../store/timesheetSlice'
 import TimeEntryForm from '../components/timesheet/TimeEntryForm'
-import type { TimeEntry } from '../types/timeEntry'
+import type { TimeEntry, ApprovalStatus } from '../types/timeEntry'
 import styles from './TimeEntryCreatePage.module.css'
 
 // 新增页：复用 TimeEntryForm 新增模式（不传 initialData），审批状态默认"待审批"

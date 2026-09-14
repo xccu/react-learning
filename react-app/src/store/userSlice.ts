@@ -1,10 +1,22 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
-import type { User } from '../types/timeEntry'
-import { getUsers as getUsersApi, getUserById as getUserByIdApi, addUser as addUserApi, updateUser as updateUserApi, deleteUser as deleteUserApi, login as loginApi } from '../api/timeEntryApi'
+import type { User, Role, Permission } from '../types/timeEntry'
+import { getUsers as getUsersApi, getUserById as getUserByIdApi, addUser as addUserApi, updateUser as updateUserApi, deleteUser as deleteUserApi, login as loginApi, getRoles as getRolesApi, createRole as createRoleApi, updateRole as updateRoleApi, deleteRole as deleteRoleApi } from '../api/timeEntryApi'
+import { hasPermission as checkPermission, getUserPermissions } from '../api/mockApi'
+
+// 辅助函数：检查用户是否有指定权限
+export function hasPermission(userRoles: string[], permission: Permission): boolean {
+  return checkPermission(userRoles, permission)
+}
+
+// 辅助函数：获取用户的所有权限
+export function getUserPermissionsFromRoles(userRoles: string[]): Permission[] {
+  return getUserPermissions(userRoles)
+}
 
 interface UserState {
   users: User[]
   currentUser: User | null    // 当前登录用户
+  roles: Role[]
   loading: boolean
   error: string | null
 }
@@ -12,6 +24,7 @@ interface UserState {
 const initialState: UserState = {
   users: [],
   currentUser: null,
+  roles: [],
   loading: false,
   error: null,
 }
@@ -53,6 +66,33 @@ export const loginUser = createAsyncThunk<User, { username: string; password: st
   return loginApi(credentials.username, credentials.password)
 })
 
+// 异步 thunks：获取角色列表
+export const fetchRoles = createAsyncThunk<Role[]>('user/fetchRoles', async () => {
+  return getRolesApi()
+})
+
+// 异步 thunks：创建角色
+export const createRole = createAsyncThunk<Role, Omit<Role, 'id'>>('user/createRole', async (roleData) => {
+  return createRoleApi(roleData)
+})
+
+// 异步 thunks：更新角色
+export const updateRole = createAsyncThunk<Role, { id: string; updates: Partial<Omit<Role, 'id'>> }>(
+  'user/updateRole',
+  async ({ id, updates }) => {
+    return updateRoleApi(id, updates)
+  }
+)
+
+// 异步 thunks：删除角色
+export const removeRole = createAsyncThunk<void, string, { rejectValue: string }>('user/deleteRole', async (id, { rejectWithValue }) => {
+  try {
+    await deleteRoleApi(id)
+  } catch (err) {
+    return rejectWithValue(err instanceof Error ? err.message : '删除失败')
+  }
+})
+
 const userSlice = createSlice({
   name: 'user',
   initialState,
@@ -83,6 +123,25 @@ const userSlice = createSlice({
     // 清除当前用户
     clearCurrentUser(state) {
       state.currentUser = null
+    },
+    // 设置角色列表
+    setRoles(state, action: PayloadAction<Role[]>) {
+      state.roles = action.payload
+    },
+    // 新增角色
+    addRole(state, action: PayloadAction<Role>) {
+      state.roles.push(action.payload)
+    },
+    // 更新角色
+    updateRoleSync(state, action: PayloadAction<Role>) {
+      const index = state.roles.findIndex((r) => r.id === action.payload.id)
+      if (index !== -1) {
+        state.roles[index] = action.payload
+      }
+    },
+    // 删除角色
+    deleteRoleSync(state, action: PayloadAction<string>) {
+      state.roles = state.roles.filter((r) => r.id !== action.payload)
     },
   },
   extraReducers: (builder) => {
@@ -177,6 +236,69 @@ const userSlice = createSlice({
         state.loading = false
         state.error = action.error.message ?? '登录失败'
       })
+
+    // fetchRoles
+    builder
+      .addCase(fetchRoles.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchRoles.fulfilled, (state, action) => {
+        state.loading = false
+        state.roles = action.payload
+      })
+      .addCase(fetchRoles.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.error.message ?? '加载角色列表失败'
+      })
+
+    // createRole
+    builder
+      .addCase(createRole.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(createRole.fulfilled, (state, action) => {
+        state.loading = false
+        state.roles.push(action.payload)
+      })
+      .addCase(createRole.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.error.message ?? '创建角色失败'
+      })
+
+    // updateRole
+    builder
+      .addCase(updateRole.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(updateRole.fulfilled, (state, action) => {
+        state.loading = false
+        const index = state.roles.findIndex((r) => r.id === action.payload.id)
+        if (index !== -1) {
+          state.roles[index] = action.payload
+        }
+      })
+      .addCase(updateRole.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.error.message ?? '更新角色失败'
+      })
+
+    // deleteRole
+    builder
+      .addCase(removeRole.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(removeRole.fulfilled, (state, action) => {
+        state.loading = false
+        state.roles = state.roles.filter((r) => r.id !== action.meta.arg)
+      })
+      .addCase(removeRole.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload ?? '删除角色失败'
+      })
   },
 })
 
@@ -187,6 +309,10 @@ export const {
   deleteUser,
   setCurrentUser,
   clearCurrentUser,
-} = userSlice.actions
+  setRoles,
+  addRole,
+  updateRole: updateRoleSync,
+  deleteRole: deleteRoleSync,
+} = userSlice.actions as any
 
 export default userSlice.reducer

@@ -6,8 +6,8 @@ import type { RootState, AppDispatch } from '../store'
 import { getEntryById } from '../api/timeEntryApi'
 import { updateEntry, submitEntry, setEntries } from '../store/timesheetSlice'
 import TimeEntryForm from '../components/timesheet/TimeEntryForm'
-import type { TimeEntry } from '../types/timeEntry'
-import styles from './TimeEntryDetailPage.module.css'
+// TimeEntry type not needed - using store data
+import styles from './TimeEntryEditPage.module.css'
 
 // 编辑页：按路由标识经请求模块加载记录并预填表单，处理加载中与记录不存在状态
 function TimeEntryEditPage() {
@@ -29,8 +29,8 @@ function TimeEntryEditPage() {
       .then((data) => {
         dispatch(setEntries([data]))
       })
-      // 记录不存在时响应拦截器会把「记录不存在」作为错误信息抛出
       .catch((err) => setError(err instanceof Error ? err.message : '加载失败'))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
   // 记录不存在或加载失败时显示提示 + 返回列表入口
@@ -45,13 +45,14 @@ function TimeEntryEditPage() {
     )
   }
 
-  // 提交修改：dispatch updateEntry 后返回列表页
+  // 提交修改：dispatch updateEntry 后返回列表
   const handleSubmit = async (data: Omit<TimeEntry, 'id' | 'createdAt'>) => {
     const isRejected = entry.approvalStatus === '已驳回'
     if (isRejected) {
       dispatch(submitEntry(entry.id))
     }
-    const { approvalStatus, ...updateData } = data
+    const _approvalStatus = data.approvalStatus
+    const { approvalStatus: _, ...updateData } = data
     dispatch(updateEntry({ ...entry, ...updateData, hours: Number(data.hours), approvalStatus: isRejected ? '待审批' : entry.approvalStatus, ...(isRejected && { rejectReason: undefined }) }))
     navigate('/')
   }

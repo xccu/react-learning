@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import type { RootState, AppDispatch } from '../store'
 import { deleteEntry, approveEntry, rejectEntry, setEntries } from '../store/timesheetSlice'
 import { Table, Tag, Popconfirm, message, Space, Button, Pagination, Upload, Modal, Form, Input } from 'antd'
-import { DownloadOutlined, UploadOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons'
+import { DownloadOutlined, UploadOutlined, CheckOutlined, CloseOutlined, FileTextOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import Header from '../components/timesheet/Header'
 import Stats from '../components/timesheet/Stats'
@@ -13,6 +13,7 @@ import type { TimeEntry } from '../types/timeEntry'
 import type { TimeEntryQuery } from '../api/mockApi'
 import { addEntries, queryEntries, getEntries } from '../api/timeEntryApi'
 import { exportToExcel, importFromExcel } from '../utils/excel'
+import usePermission from '../hooks/usePermission'
 import styles from './TimeEntryListPage.module.css'
 
 // 审批状态颜色映射
@@ -46,6 +47,9 @@ function TimeEntryListPage() {
   // 从 Redux Store 读取状态
   const { entries, loading, error } = useSelector((state: RootState) => state.timesheet)
   const dispatch = useDispatch<AppDispatch>()
+  const hasWritePermission = usePermission('TimeSheet.Write')
+  const hasApprovalPermission = usePermission('TimeSheet.approval')
+  const hasExportPermission = usePermission('TimeSheet.Export')
 
   // 挂载时加载数据
   useEffect(() => {
@@ -56,6 +60,7 @@ function TimeEntryListPage() {
         // 加载失败不影响使用
       })
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // useNavigate：编程式导航，跳转路径由点击的记录动态决定
@@ -89,7 +94,13 @@ function TimeEntryListPage() {
       if (!projectName && !description && !approvalStatus) {
         setFiltered(null)
       } else {
-        setFiltered(await queryEntries(query))
+        try {
+          const results = await queryEntries(query)
+          setFiltered(results)
+        } catch (err) {
+          message.error('查询失败：' + (err instanceof Error ? err.message : '未知错误'))
+          setFiltered(null)
+        }
       }
       // 查询条件变化时重置 currentPage 为 1
       setCurrentPage(1)
@@ -256,17 +267,21 @@ function TimeEntryListPage() {
       render: (_, record) => (
         <Space size="small">
           <Button size="small" onClick={() => handleViewDetail(record)}>详情</Button>
-          <Button size="small" onClick={() => handleEdit(record)}>编辑</Button>
-          <Popconfirm
-            title="确定删除该工时记录吗？"
-            okText="删除"
-            cancelText="取消"
-            onConfirm={() => handleDelete(record.id)}
-          >
-            <Button danger size="small">删除</Button>
-          </Popconfirm>
+          {hasWritePermission && (
+            <Button size="small" onClick={() => handleEdit(record)}>编辑</Button>
+          )}
+          {hasWritePermission && (
+            <Popconfirm
+              title="确定删除该工时记录吗？"
+              okText="删除"
+              cancelText="取消"
+              onConfirm={() => handleDelete(record.id)}
+            >
+              <Button danger size="small">删除</Button>
+            </Popconfirm>
+          )}
           {/* 按状态条件渲染审批按钮 */}
-          {record.approvalStatus === '待审批' && (
+          {record.approvalStatus === '待审批' && hasApprovalPermission && (
             <>
               <Button size="small" type="primary" icon={<CheckOutlined />} onClick={() => handleApprove(record.id)}>通过</Button>
               <Button size="small" icon={<CloseOutlined />} onClick={() => handleReject(record.id)}>驳回</Button>
@@ -279,8 +294,8 @@ function TimeEntryListPage() {
 
   return (
     <div>
-      <Header title="工时列表" />
-      <TimeEntryQueryForm onQuery={handleQuery} onCreate={handleCreate} />
+      <Header title="工时列表" icon={<FileTextOutlined />} />
+      <TimeEntryQueryForm onQuery={handleQuery} onCreate={handleCreate} showCreate={hasWritePermission} />
 
       {loading ? (
         /* 加载中状态 */
@@ -299,26 +314,30 @@ function TimeEntryListPage() {
           <div className={styles.toolbar}>
             <Stats totalHours={totalHours} />
             <div className={styles.toolbarActions}>
-              <Button
-                icon={<DownloadOutlined />}
-                onClick={handleExport}
-                disabled={visibleEntries.length === 0}
-              >
-                导出
-              </Button>
-              <Upload
-                accept=".xlsx"
-                showUploadList={false}
-                customRequest={(options) => {
-                  if (options.file) {
-                    handleImport(options.file as File)
-                  }
-                }}
-              >
-                <Button icon={<UploadOutlined />} loading={importing}>
-                  导入
+              {hasExportPermission && (
+                <Button
+                  icon={<DownloadOutlined />}
+                  onClick={handleExport}
+                  disabled={visibleEntries.length === 0}
+                >
+                  导出
                 </Button>
-              </Upload>
+              )}
+              {hasExportPermission && (
+                <Upload
+                  accept=".xlsx"
+                  showUploadList={false}
+                  customRequest={(options) => {
+                    if (options.file) {
+                      handleImport(options.file as File)
+                    }
+                  }}
+                >
+                  <Button icon={<UploadOutlined />} loading={importing}>
+                    导入
+                  </Button>
+                </Upload>
+              )}
             </div>
           </div>
           {/* 使用 Ant Design Table 渲染列表 */}

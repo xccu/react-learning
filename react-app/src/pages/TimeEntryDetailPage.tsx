@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import type { RootState, AppDispatch } from '../store'
 import { getEntryById } from '../api/timeEntryApi'
 import { approveEntry, rejectEntry, setEntries } from '../store/timesheetSlice'
-import type { TimeEntry } from '../types/timeEntry'
+// TimeEntry type not needed - using store data
 import styles from './TimeEntryDetailPage.module.css'
 
 // 详情页：按路由标识经请求模块加载单条记录，处理加载中与记录不存在状态
@@ -26,8 +26,8 @@ function TimeEntryDetailPage() {
       .then((data) => {
         dispatch(setEntries([data]))
       })
-      // 记录不存在时响应拦截器会把「记录不存在」作为错误信息抛出
       .catch((err) => setError(err instanceof Error ? err.message : '加载失败'))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
   // 加载失败或记录不存在时显示提示 + 返回列表入口

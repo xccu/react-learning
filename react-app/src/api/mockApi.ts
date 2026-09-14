@@ -1,7 +1,7 @@
 // 工时记录的数据类型
 // 【TypeScript 类型导出】仅从 types/timeEntry.ts 导入并重新导出供外部使用
-import type { TimeEntry, ApprovalStatus, User, UserRole } from '../types/timeEntry'
-export type { TimeEntry, ApprovalStatus, User, UserRole }
+import type { TimeEntry, ApprovalStatus, User, UserRole, Role, Permission, RoleName, UserQuery } from '../types/timeEntry'
+export type { TimeEntry, ApprovalStatus, User, UserRole, Role, Permission, RoleName, UserQuery }
 
 // 内存中初始化模拟数据数组（包含 3 条示例记录）
 let entries: TimeEntry[] = [
@@ -160,29 +160,125 @@ export async function rejectEntry(id: string, reason: string): Promise<TimeEntry
   return Promise.resolve(entry)
 }
 
+// ========== 角色和权限模块 ==========
+
+// 默认角色数据
+let roles: Role[] = [
+  {
+    id: '1',
+    name: 'Administrator',
+    permissions: ['TimeSheet.Read', 'User.Read', 'User.Write', 'Role.Read', 'Role.Write'],
+  },
+  {
+    id: '2',
+    name: 'ProjectManager',
+    permissions: ['TimeSheet.Read', 'TimeSheet.Write', 'TimeSheet.Export', 'TimeSheet.Import', 'TimeSheet.approval', 'User.Read', 'User.Write'],
+  },
+  {
+    id: '3',
+    name: 'User',
+    permissions: ['TimeSheet.Read', 'TimeSheet.Write'],
+  },
+]
+
+// 获取所有角色
+export async function getRoles(): Promise<Role[]> {
+  return Promise.resolve([...roles])
+}
+
+// 获取单个角色
+export async function getRoleById(id: string): Promise<Role> {
+  const role = roles.find((r) => r.id === id)
+  if (!role) {
+    return Promise.reject(new Error('角色不存在'))
+  }
+  return Promise.resolve({ ...role })
+}
+
+// 根据角色名获取角色
+export async function getRoleByName(name: RoleName): Promise<Role | undefined> {
+  return roles.find((r) => r.name === name)
+}
+
+// 创建角色
+export async function createRole(role: Omit<Role, 'id'>): Promise<Role> {
+  const newRole: Role = {
+    ...role,
+    id: Date.now().toString(),
+  }
+  roles = [...roles, newRole]
+  return Promise.resolve(newRole)
+}
+
+// 更新角色
+export async function updateRole(id: string, updates: Partial<Omit<Role, 'id'>>): Promise<Role> {
+  const index = roles.findIndex((r) => r.id === id)
+  if (index === -1) {
+    return Promise.reject(new Error('角色不存在'))
+  }
+  roles[index] = { ...roles[index], ...updates }
+  return Promise.resolve({ ...roles[index] })
+}
+
+// 删除角色
+export async function deleteRole(id: string): Promise<void> {
+  const role = roles.find((r) => r.id === id)
+  if (!role) {
+    return Promise.reject(new Error('角色不存在'))
+  }
+  if (role.name === 'Administrator') {
+    return Promise.reject(new Error('不能删除 Administrator 角色'))
+  }
+  roles = roles.filter((r) => r.id !== id)
+  return Promise.resolve()
+}
+
+// 检查用户是否有指定权限
+export function hasPermission(userRoles: UserRole[], permission: Permission): boolean {
+  for (const roleName of userRoles) {
+    const role = roles.find((r) => r.name === roleName)
+    if (role && role.permissions.includes(permission)) {
+      return true
+    }
+  }
+  return false
+}
+
+// 获取用户的所有权限
+export function getUserPermissions(userRoles: UserRole[]): Permission[] {
+  const permissions: Permission[] = []
+  for (const roleName of userRoles) {
+    const role = roles.find((r) => r.name === roleName)
+    if (role) {
+      permissions.push(...role.permissions)
+    }
+  }
+  return [...new Set(permissions)]
+}
+
 // ========== 用户模块 ==========
 
-// 内存中初始化用户模拟数据（包含 3 条默认用户）
+// 内存中初始化用户模拟数据（包含 3 个默认用户）
 let users: User[] = [
   {
     id: '1',
-    username: 'admin',
-    password: 'admin123',
-    roles: ['管理员'],
+    username: 'Administrator',
+    password: 'Pass@word0',
+    roles: ['Administrator'],
     createdAt: new Date(Date.now() - 86400000).toISOString(),
   },
   {
     id: '2',
-    username: 'user1',
-    password: 'user123',
-    roles: ['普通用户'],
+    username: 'ProjectManager',
+    password: 'Pass@word0',
+    roles: ['ProjectManager'],
     createdAt: new Date(Date.now() - 43200000).toISOString(),
   },
   {
     id: '3',
-    username: 'user2',
-    password: 'user123',
-    roles: ['普通用户'],
+    username: 'User',
+    password: 'Pass@word0',
+    roles: ['User'],
     createdAt: new Date(Date.now() - 21600000).toISOString(),
   },
 ]

@@ -1,8 +1,8 @@
 // 【axios-mock-adapter】模拟后端 REST 接口，复用 mockApi 内存数据源
 import MockAdapter from 'axios-mock-adapter'
 import httpClient from './httpClient'
-import { getEntries, queryEntries, getEntryById, addEntry, addEntries, updateEntry, deleteEntry, submitEntry, approveEntry, rejectEntry, getUsers, queryUsers, getUserById, addUser, updateUser, deleteUser, login } from './mockApi'
-import type { TimeEntryQuery, UserQuery } from './mockApi'
+import { getEntries, queryEntries, getEntryById, addEntry, addEntries, updateEntry, deleteEntry, submitEntry, approveEntry, rejectEntry, getUsers, queryUsers, getUserById, addUser, updateUser, deleteUser, login, getRoles, getRoleById, createRole, updateRole, deleteRole } from './mockApi'
+import type { TimeEntryQuery, UserQuery, Role } from './mockApi'
 import type { TimeEntry, User } from '../types/timeEntry'
 
 export function setupMockAdapter(): MockAdapter {
@@ -132,6 +132,47 @@ export function setupMockAdapter(): MockAdapter {
     return login(body.username, body.password).then(
       (data) => [200, data],
       (err) => [401, { message: err instanceof Error ? err.message : '登录失败' }]
+    )
+  })
+
+  // ========== 角色模块 ==========
+
+  // 角色列表
+  mock.onGet('/roles').reply(() => {
+    return getRoles().then((data) => [200, data])
+  })
+
+  // 角色详情
+  mock.onGet(/\/roles\/.+$/).reply((config) => {
+    const id = (config.url ?? '').split('/').pop() ?? ''
+    return getRoleById(id).then(
+      (data) => [200, data],
+      (err) => [404, { message: err instanceof Error ? err.message : '角色不存在' }]
+    )
+  })
+
+  // 创建角色
+  mock.onPost('/roles').reply((config) => {
+    const body = JSON.parse(config.data) as Omit<Role, 'id'>
+    return createRole(body).then((data) => [201, data])
+  })
+
+  // 更新角色
+  mock.onPut(/\/roles\/.+$/).reply((config) => {
+    const id = (config.url ?? '').split('/').pop() ?? ''
+    const body = JSON.parse(config.data) as Partial<Omit<Role, 'id'>>
+    return updateRole(id, body).then(
+      (data) => [200, data],
+      (err) => [404, { message: err instanceof Error ? err.message : '角色不存在' }]
+    )
+  })
+
+  // 删除角色
+  mock.onDelete(/\/roles\/.+$/).reply((config) => {
+    const id = (config.url ?? '').split('/').pop() ?? ''
+    return deleteRole(id).then(
+      () => [200, { success: true }],
+      (err) => [403, { message: err instanceof Error ? err.message : '删除失败' }]
     )
   })
 
