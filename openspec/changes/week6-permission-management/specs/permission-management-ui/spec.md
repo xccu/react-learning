@@ -20,20 +20,20 @@ The system SHALL provide a permission management page with a table displaying ro
 - **THEN** an "Add Role" button and card are displayed, clicking navigates to the role creation page
 
 ### Requirement: Permission assignment page
-The system SHALL provide a permission assignment page using Ant Design Transfer component for assigning permissions to roles.
+The system SHALL provide a permission assignment page using Ant Design Select component (mode="multiple") for assigning permissions to roles.
 
-#### Scenario: Transfer component layout
+#### Scenario: Select component layout
 - **WHEN** user opens the permission assignment page for a role
-- **THEN** the Ant Design Transfer component displays with left panel showing unassigned permissions and right panel showing assigned permissions
+- **THEN** the Ant Design Select component displays with a dropdown showing all available permissions, and selected permissions are shown as tags
 
 #### Scenario: New role creation with permission assignment
 - **WHEN** user clicks "Add Role" button
-- **THEN** the user can enter a role name and use the Transfer component to assign permissions before saving
+- **THEN** the user can enter a role name and use the Select component to assign permissions before saving
 
 #### Scenario: Edit role permission assignment
 - **WHEN** user edits an existing role
-- **THEN** the Transfer component shows current permissions in the right panel and unassigned permissions in the left panel
+- **THEN** the Select component shows current permissions as selected options
 
-#### Scenario: Permission transfer interaction
-- **WHEN** user drags or moves permissions between panels in the Transfer component
-- **THEN** the right panel reflects assigned permissions and the left panel reflects unassigned permissions
+#### Scenario: Permission assignment interaction
+- **WHEN** user selects or deselects permissions in the Select component
+- **THEN** the selected permissions list updates in real time

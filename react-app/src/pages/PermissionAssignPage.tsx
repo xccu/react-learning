@@ -50,11 +50,10 @@ function PermissionAssignPage() {
         dispatch(updateRoleSync({ id: id!, name: values.name.trim(), permissions: selectedPermissions } as Role))
         message.success('更新成功')
       } else {
-        const newRole = await dispatch(createRole({
+        await dispatch(createRole({
           name: values.name.trim(),
           permissions: selectedPermissions,
         })).unwrap()
-        dispatch(addRole(newRole))
         message.success('创建成功')
       }
       navigate('/permissions')
