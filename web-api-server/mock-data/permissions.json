@@ -1,0 +1,11 @@
+[
+  { "id": "1", "name": "TimeSheet.Read", "label": "工时查询" },
+  { "id": "2", "name": "TimeSheet.Write", "label": "工时增删改" },
+  { "id": "3", "name": "TimeSheet.Export", "label": "工时导出" },
+  { "id": "4", "name": "TimeSheet.Import", "label": "工时导入" },
+  { "id": "5", "name": "TimeSheet.approval", "label": "工时审批" },
+  { "id": "6", "name": "User.Read", "label": "用户查询" },
+  { "id": "7", "name": "User.Write", "label": "用户增删改" },
+  { "id": "8", "name": "Role.Read", "label": "角色读取" },
+  { "id": "9", "name": "Role.Write", "label": "角色管理" }
+]

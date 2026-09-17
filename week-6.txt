@@ -1,0 +1,44 @@
+第六周 权限管理:
+目前为第六周，知识学习以及基本完成，在现有技术栈下完成下面设计，非必要不要引入新的技术栈
+
+1.实体映射和权限数据:
+1.1实体类型包括User（用户），Role（角色），Permission（权限）三个类型 对应关系分别为 User:Role = 1:n,Role:Permission=1:n
+1.2Permission（权限）包括:
+TimeSheet.Read		工时查询，查看详情
+TimeSheet.Write,	工时增删改
+TimeSheet.Export,	工时导出
+TimeSheet.Import,	工时导入
+TimeSheet.approval,	工时审批（通过或驳回）
+User.Read, 		用户查询，查看详情
+User.Write,		用户增删改
+Role.Read,		角色读取
+Role.Write,		角色创建，分配permission，删除
+1.3默认有三种role(角色)
+用户(User) :			TimeSheet.Read,TimeSheet.Write
+项目经理（ProjectManager）:	TimeSheet.Read,TimeSheet.Write,TimeSheet.approval,TimeSheet.Import,TimeSheet.Export,User.Read, User.Write
+管理员（Administrator）:		TimeSheet.Read,User.Read,User.Write,Role.Read,Role.Write
+1.4 默认用户:
+三个角色各一个用户，用户名与role名字一致
+
+2.页面
+2.1 添加权限管理页面页面是类似用户管理和工时管理页面的表格+条件搜索和新增角色卡片。表格显示role+删除按钮。删除按钮删除Role，Administrator Role不能删除（删除按钮为未激活）。
+2.2 分配权限页面:可以把权限分配给当前Role，采用Antdesign Transfer组件。左侧为未分配的权限，左侧为已分配的权限。新增角色按钮点击进入新增角色页面，可以显示RoleName和通过Antdesign Transfer组件分配权限。
+2.3 登录页面现在快捷登录的 admin/user1/user2 改为 Administrator/ProjectManager/User，密码统一为Pass@word0
+2.4  左侧导航栏添加权限管理链接
+
+3.权限控制
+3.1 页面，导航和按钮，组件权限:
+工时列表/详情: TimeSheet.Read
+工时审批/驳回: TimeSheet.approval
+工时新增/编辑/删除: TimeSheet.Write
+用户管理/详情: User.Read
+用户新增/编辑/删除: User.Write
+权限管理: Role.Read
+权限新增/分配/删除: Role.Write
+3.2 行为
+上述权限控制涉及页面，导航栏，按钮，API请求。对没有权限的用户相关页面返回403;导航栏和组件，按钮不可见;访问API失败。
+启动项目后，默认没有用户登录，需要跳转到login页面，登录后，用户，role，permission存放在token中（httpclient.ts中config.headers.Authorization = 'Bearer mock-token'）随后用户访问页面，组件是否可见均通过此处获取用户的permission控制。
+用户没用登录时，url访问页面会跳转到login页面，登录后如果有对应permission则跳转回原来url页面，否则跳转403.同理用户访问没有对应permission的页面url返回403.
+
+
+

@@ -1,0 +1,16 @@
+[
+  { "roleName": "Administrator", "permissionName": "TimeSheet.Read" },
+  { "roleName": "Administrator", "permissionName": "User.Read" },
+  { "roleName": "Administrator", "permissionName": "User.Write" },
+  { "roleName": "Administrator", "permissionName": "Role.Read" },
+  { "roleName": "Administrator", "permissionName": "Role.Write" },
+  { "roleName": "ProjectManager", "permissionName": "TimeSheet.Read" },
+  { "roleName": "ProjectManager", "permissionName": "TimeSheet.Write" },
+  { "roleName": "ProjectManager", "permissionName": "TimeSheet.Export" },
+  { "roleName": "ProjectManager", "permissionName": "TimeSheet.Import" },
+  { "roleName": "ProjectManager", "permissionName": "TimeSheet.approval" },
+  { "roleName": "ProjectManager", "permissionName": "User.Read" },
+  { "roleName": "ProjectManager", "permissionName": "User.Write" },
+  { "roleName": "User", "permissionName": "TimeSheet.Read" },
+  { "roleName": "User", "permissionName": "TimeSheet.Write" }
+]

@@ -1,0 +1,27 @@
+[
+  {
+    "id": "1",
+    "projectName": "React 学习",
+    "description": "学习函数组件和 Hooks",
+    "hours": 3,
+    "approvalStatus": "已通过",
+    "createdAt": "2026-09-15T10:00:00.000Z"
+  },
+  {
+    "id": "2",
+    "projectName": "项目 A",
+    "description": "开发用户登录功能",
+    "hours": 5,
+    "approvalStatus": "待审批",
+    "createdAt": "2026-09-14T22:00:00.000Z"
+  },
+  {
+    "id": "3",
+    "projectName": "代码审查",
+    "description": "审查 Pull Request #42",
+    "hours": 1.5,
+    "approvalStatus": "已驳回",
+    "rejectReason": "工时填写不规范",
+    "createdAt": "2026-09-14T10:00:00.000Z"
+  }
+]

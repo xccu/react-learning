@@ -1,0 +1,20 @@
+[
+  {
+    "id": "1",
+    "username": "Administrator",
+    "password": "Pass@word0",
+    "createdAt": "2025-09-13T10:00:00.000Z"
+  },
+  {
+    "id": "2",
+    "username": "ProjectManager",
+    "password": "Pass@word0",
+    "createdAt": "2025-09-12T10:00:00.000Z"
+  },
+  {
+    "id": "3",
+    "username": "User",
+    "password": "Pass@word0",
+    "createdAt": "2025-09-11T10:00:00.000Z"
+  }
+]

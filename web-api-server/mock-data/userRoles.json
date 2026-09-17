@@ -1,0 +1,5 @@
+[
+  { "userName": "Administrator", "roleName": "Administrator" },
+  { "userName": "ProjectManager", "roleName": "ProjectManager" },
+  { "userName": "User", "roleName": "User" }
+]

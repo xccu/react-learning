@@ -1,0 +1,116 @@
+### TimeEntry - List all
+GET http://localhost:8000/api/time-entries
+
+### TimeEntry - Filter by projectName
+GET http://localhost:8000/api/time-entries?projectName=React
+
+### TimeEntry - Filter by approvalStatus
+GET http://localhost:8000/api/time-entries?approvalStatus=待审批
+
+### TimeEntry - Get by ID
+GET http://localhost:8000/api/time-entries/1
+
+### TimeEntry - Create
+POST http://localhost:8000/api/time-entries
+Content-Type: application/json
+
+{
+  "projectName": "项目 B",
+  "description": "开发用户管理",
+  "hours": 4,
+  "approvalStatus": "待审批"
+}
+
+### TimeEntry - Batch Create
+POST http://localhost:8000/api/time-entries/batch
+Content-Type: application/json
+
+[
+  { "projectName": "A", "description": "d1", "hours": 2, "approvalStatus": "待审批" },
+  { "projectName": "B", "description": "d2", "hours": 3, "approvalStatus": "待审批" }
+]
+
+### TimeEntry - Update
+PUT http://localhost:8000/api/time-entries/1
+Content-Type: application/json
+
+{ "hours": 6, "description": "更新描述" }
+
+### TimeEntry - Delete
+DELETE http://localhost:8000/api/time-entries/1
+
+### TimeEntry - Submit for Approval
+PUT http://localhost:8000/api/time-entries/1/submit
+
+### TimeEntry - Approve
+PUT http://localhost:8000/api/time-entries/1/approve
+
+### TimeEntry - Reject
+PUT http://localhost:8000/api/time-entries/1/reject
+Content-Type: application/json
+
+{ "reason": "工时填写不规范" }
+
+### User - List all
+GET http://localhost:8000/api/users
+
+### User - Filter by username
+GET http://localhost:8000/api/users?username=Admin
+
+### User - Filter by role
+GET http://localhost:8000/api/users?role=Administrator
+
+### User - Get by ID
+GET http://localhost:8000/api/users/1
+
+### User - Create
+POST http://localhost:8000/api/users
+Content-Type: application/json
+
+{
+  "username": "NewUser",
+  "password": "Pass@word0",
+  "roles": ["User"]
+}
+
+### User - Update
+PUT http://localhost:8000/api/users/3
+Content-Type: application/json
+
+{ "roles": ["ProjectManager"] }
+
+### User - Delete
+DELETE http://localhost:8000/api/users/1
+
+### User - Login
+POST http://localhost:8000/api/users/login
+Content-Type: application/json
+
+{ "username": "Administrator", "password": "Pass@word0" }
+
+### Role - List all
+GET http://localhost:8000/api/roles
+
+### Role - Get by ID
+GET http://localhost:8000/api/roles/1
+
+### Role - Create
+POST http://localhost:8000/api/roles
+Content-Type: application/json
+
+{
+  "name": "Developer",
+  "permissions": ["TimeSheet.Read", "TimeSheet.Write"]
+}
+
+### Role - Update
+PUT http://localhost:8000/api/roles/3
+Content-Type: application/json
+
+{ "permissions": ["TimeSheet.Read", "TimeSheet.Write", "TimeSheet.Export"] }
+
+### Role - Delete
+DELETE http://localhost:8000/api/roles/3
+
+### Role - Delete Administrator (should return 403)
+DELETE http://localhost:8000/api/roles/1
