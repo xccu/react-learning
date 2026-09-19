@@ -26,15 +26,14 @@ function UserCreatePage() {
     label: r.name,
   }))
 
-  // 提交新增：创建用户后重新加载用户列表
+  // 提交新增：通过 createUser thunk 创建用户，成功后自动更新 Store
   const handleSubmit = async (data: { username: string; password?: string; roles: User['roles'] }) => {
     try {
       await dispatch(createUser({
         username: data.username.trim(),
         password: data.password ?? 'Pass@word0',
         roles: data.roles,
-      } as Omit<User, 'id' | 'createdAt'>))
-      await dispatch(fetchUsers())
+      } as Omit<User, 'id' | 'createdAt'>)).unwrap()
       message.success('创建成功')
       navigate('/users')
     } catch (err) {

@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import type { RootState, AppDispatch } from '../store'
-import { deleteEntry, approveEntry, rejectEntry, setEntries } from '../store/timesheetSlice'
+import { deleteEntryThunk, approveEntryThunk, rejectEntryThunk, fetchEntries, setEntries } from '../store/timesheetSlice'
 import { Table, Tag, Popconfirm, message, Space, Button, Pagination, Upload, Modal, Form, Input } from 'antd'
 import { DownloadOutlined, UploadOutlined, CheckOutlined, CloseOutlined, FileTextOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
@@ -10,7 +10,7 @@ import Header from '../components/timesheet/Header'
 import Stats from '../components/timesheet/Stats'
 import TimeEntryQueryForm from '../components/timesheet/TimeEntryQueryForm'
 import type { TimeEntry, TimeEntryQuery } from '../types/timeEntry'
-import { addEntries, queryEntries, getEntries, deleteEntry as deleteEntryApi, approveEntry as approveEntryApi, rejectEntry as rejectEntryApi, submitEntry as submitEntryApi } from '../api/timeEntryApi'
+import { addEntries, queryEntries } from '../api/timeEntryApi'
 import { exportToExcel, importFromExcel } from '../utils/excel'
 import usePermission from '../hooks/usePermission'
 import styles from './TimeEntryListPage.module.css'
@@ -53,11 +53,7 @@ function TimeEntryListPage() {
   // 挂载时加载数据
   useEffect(() => {
     if (entries.length === 0 && !loading) {
-      getEntries().then((data) => {
-        dispatch(setEntries(data))
-      }).catch(() => {
-        // 加载失败不影响使用
-      })
+      dispatch(fetchEntries())
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -128,14 +124,12 @@ function TimeEntryListPage() {
     [navigate]
   )
 
-  // 删除按钮：二次确认后调用 API 删除，并同步本地查询结果
+  // 删除按钮：二次确认后 dispatch deleteEntryThunk
   const handleDelete = useCallback(
     async (id: string) => {
       try {
-        await deleteEntryApi(id)
+        await dispatch(deleteEntryThunk(id)).unwrap()
         message.success('删除成功')
-        const entries = await getEntries()
-        dispatch(setEntries(entries))
         // 处于查询过滤状态时同步移除已删除记录，保持可见列表一致
         setFiltered((prev) => {
           if (!prev) return prev
@@ -160,10 +154,8 @@ function TimeEntryListPage() {
   const handleApprove = useCallback(
     async (id: string) => {
       try {
-        await approveEntryApi(id)
+        await dispatch(approveEntryThunk(id)).unwrap()
         message.success('审批通过')
-        const entries = await getEntries()
-        dispatch(setEntries(entries))
       } catch (err) {
         message.error(err instanceof Error ? err.message : '审批失败')
       }
@@ -182,10 +174,8 @@ function TimeEntryListPage() {
     try {
       const values = await rejectForm.validateFields()
       if (rejectModal.entryId) {
-        await rejectEntryApi(rejectModal.entryId, values.reason)
+        await dispatch(rejectEntryThunk({ id: rejectModal.entryId, reason: values.reason })).unwrap()
         message.success('已驳回')
-        const entries = await getEntries()
-        dispatch(setEntries(entries))
         setRejectModal({ open: false, entryId: null })
       }
     } catch {

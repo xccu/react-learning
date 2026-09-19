@@ -13,12 +13,15 @@ function PermissionListPage() {
   const navigate = useNavigate()
   const dispatch = useDispatch<AppDispatch>()
   const roles = useSelector((state: RootState) => state.user.roles)
+  const loading = useSelector((state: RootState) => state.user.loading)
   const [filtered, setFiltered] = useState<Role[] | null>(null)
   const [form] = Form.useForm<{ name?: string }>()
 
   useEffect(() => {
-    dispatch(fetchRoles())
-  }, [dispatch])
+    if (roles.length === 0 && !loading) {
+      dispatch(fetchRoles())
+    }
+  }, [dispatch, roles.length, loading])
 
   const handleQuery = useCallback((values: { name?: string }) => {
     if (!values.name?.trim()) {

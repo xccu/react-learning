@@ -1,11 +1,9 @@
-// useParams：读取 URL 动态参数定位要编辑的记录；useNavigate：提交成功后编程式跳转
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import type { RootState, AppDispatch } from '../store'
+import { updateEntryThunk, submitEntryThunk, fetchEntryById } from '../store/timesheetSlice'
 import type { TimeEntry } from '../types/timeEntry'
-import { getEntryById, updateEntry as updateEntryApi, submitEntry as submitEntryApi, getEntries } from '../api/timeEntryApi'
-import { updateEntry, submitEntry, setEntries } from '../store/timesheetSlice'
 import TimeEntryForm from '../components/timesheet/TimeEntryForm'
 import { message } from 'antd'
 import styles from './TimeEntryEditPage.module.css'
@@ -14,31 +12,30 @@ import styles from './TimeEntryEditPage.module.css'
 function TimeEntryEditPage() {
   const { id } = useParams()
   const dispatch = useDispatch<AppDispatch>()
-  const navigate = useNavigate()
 
   // 从 Redux Store 读取所有工时记录
   const entries = useSelector((state: RootState) => state.timesheet.entries)
+  const loading = useSelector((state: RootState) => state.timesheet.loading)
+  const error = useSelector((state: RootState) => state.timesheet.error)
   const entry = entries.find((e) => e.id === id) ?? null
-  const [error, setError] = useState<string | null>(null)
+  const [localError, setLocalError] = useState<string | null>(null)
 
-  // 挂载时如果 Store 中没有该记录，则从 API 加载
+  // 挂载时如果 Store 中没有该记录，则 dispatch fetchEntryById
   useEffect(() => {
     if (!id) return
     if (entry) return
-    setError(null)
-    getEntryById(id)
-      .then((data) => {
-        dispatch(setEntries([data]))
-      })
-      .catch((err) => setError(err instanceof Error ? err.message : '加载失败'))
+    setLocalError(null)
+    dispatch(fetchEntryById(id))
+      .unwrap()
+      .catch((err) => setLocalError(err instanceof Error ? err.message : '加载失败'))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id])
+  }, [id, dispatch])
 
   // 记录不存在或加载失败时显示提示 + 返回列表入口
-  if (error || !entry) {
+  if (localError || !entry) {
     return (
       <div className={styles.status}>
-        <p className={styles.errorText}>{error === '记录不存在' ? '未找到该工时记录' : '加载失败'}</p>
+        <p className={styles.errorText}>{localError === '记录不存在' ? '未找到该工时记录' : '加载失败'}</p>
         <Link to="/" className={styles.backLink}>
           返回列表
         </Link>
@@ -46,17 +43,19 @@ function TimeEntryEditPage() {
     )
   }
 
-  // 提交修改：调用 API 后刷新列表并返回
+  // 提交修改：通过 thunks 更新
   const handleSubmit = async (data: Omit<TimeEntry, 'id' | 'createdAt'>) => {
     try {
       const isRejected = entry.approvalStatus === '已驳回'
       if (isRejected) {
-        await submitEntryApi(entry.id)
+        await dispatch(submitEntryThunk(entry.id)).unwrap()
       }
       const { approvalStatus: _, ...updateData } = data
-      await updateEntryApi(entry.id, { ...updateData, hours: Number(data.hours), approvalStatus: isRejected ? '待审批' : entry.approvalStatus, ...(isRejected && { rejectReason: undefined }) })
-      const entries = await getEntries()
-      dispatch(setEntries(entries))
+      await dispatch(updateEntryThunk({
+        id: entry.id,
+        updates: { ...updateData, hours: Number(data.hours), approvalStatus: isRejected ? '待审批' : entry.approvalStatus, ...(isRejected && { rejectReason: undefined }) }
+      })).unwrap()
+      message.success('更新成功')
       navigate('/')
     } catch (err) {
       message.error(err instanceof Error ? err.message : '更新失败')

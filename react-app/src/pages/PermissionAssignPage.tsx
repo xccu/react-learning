@@ -3,7 +3,7 @@ import { Form, Input, Button, Select, message, Card, Space } from 'antd'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '../store'
-import { createRole, updateRole, addRole, updateRoleSync } from '../store/userSlice'
+import { createRole, updateRole } from '../store/userSlice'
 import { PERMISSION_LABELS, PERMISSIONS, type Role } from '../types/timeEntry'
 
 function PermissionAssignPage() {
@@ -47,7 +47,6 @@ function PermissionAssignPage() {
           id: id!,
           updates: { name: values.name.trim(), permissions: selectedPermissions },
         })).unwrap()
-        dispatch(updateRoleSync({ id: id!, name: values.name.trim(), permissions: selectedPermissions } as Role))
         message.success('更新成功')
       } else {
         await dispatch(createRole({

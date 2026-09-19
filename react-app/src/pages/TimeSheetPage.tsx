@@ -1,14 +1,13 @@
 import { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import type { RootState, AppDispatch } from '../store'
-import { addEntry, updateEntry, deleteEntry, setEntries } from '../store/timesheetSlice'
-import { addEntry as addEntryApi, updateEntry as updateEntryApi, deleteEntry as deleteEntryApi, getEntries } from '../api/timeEntryApi'
+import { createEntry, updateEntryThunk, deleteEntryThunk, fetchEntries } from '../store/timesheetSlice'
 import { message } from 'antd'
 import Header from '../components/timesheet/Header'
 import TimeEntryForm from '../components/timesheet/TimeEntryForm'
 import TimeEntryList from '../components/timesheet/TimeEntryList'
 import Stats from '../components/timesheet/Stats'
-import type { TimeEntry } from '../types/timeEntry'
+import type { TimeEntry, ApprovalStatus } from '../types/timeEntry'
 
 // 内部组件：包含工时填报的所有逻辑
 function TimeSheetPage() {
@@ -24,18 +23,18 @@ function TimeSheetPage() {
   ) => {
     try {
       if (editingEntry) {
-        // 编辑模式：调用 API
-        await updateEntryApi(editingEntry.id, { ...entry, hours: Number(entry.hours) })
+        // 编辑模式：调用 updateEntryThunk
+        await dispatch(updateEntryThunk({
+          id: editingEntry.id,
+          updates: { ...entry, hours: Number(entry.hours) }
+        })).unwrap()
         message.success('更新成功')
         setEditingEntry(null)
       } else {
-        // 新增模式：调用 API
-        await addEntryApi({ ...entry, hours: Number(entry.hours), approvalStatus: '待审批' })
+        // 新增模式：调用 createEntry thunk
+        await dispatch(createEntry({ ...entry, hours: Number(entry.hours), approvalStatus: '待审批' as ApprovalStatus })).unwrap()
         message.success('新增成功')
       }
-      // 刷新列表
-      const entries = await getEntries()
-      dispatch(setEntries(entries))
     } catch (err) {
       message.error(err instanceof Error ? err.message : '操作失败')
     }
@@ -54,10 +53,8 @@ function TimeSheetPage() {
   // 处理删除
   const handleDelete = async (id: string) => {
     try {
-      await deleteEntryApi(id)
+      await dispatch(deleteEntryThunk(id)).unwrap()
       message.success('删除成功')
-      const entries = await getEntries()
-      dispatch(setEntries(entries))
     } catch (err) {
       message.error(err instanceof Error ? err.message : '删除失败')
     }

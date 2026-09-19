@@ -76,7 +76,7 @@ function UserEditPage() {
   // 提交修改：通过 updateUser thunk 更新用户，成功后返回列表
   const handleSubmit = async (data: { username: string; password?: string; roles: User['roles'] }) => {
     if (!user) return
-    await dispatch(updateUser({ id: user.id, updates: data }))
+    await dispatch(updateUser({ id: user.id, updates: data })).unwrap()
     navigate('/users')
   }
 

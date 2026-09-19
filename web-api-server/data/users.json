@@ -3,36 +3,21 @@
     "id": "1",
     "username": "Administrator",
     "password": "Pass@word0",
-    "roles": [
-      "Administrator"
-    ],
+    "roles": ["Administrator"],
     "createdAt": "2026-09-15T10:00:00.000Z"
   },
   {
     "id": "2",
     "username": "ProjectManager",
     "password": "Pass@word0",
-    "roles": [
-      "ProjectManager"
-    ],
+    "roles": ["ProjectManager"],
     "createdAt": "2026-09-14T22:00:00.000Z"
   },
   {
     "id": "3",
     "username": "User",
     "password": "Pass@word0",
-    "roles": [
-      "User"
-    ],
+    "roles": ["User"],
     "createdAt": "2026-09-14T10:00:00.000Z"
-  },
-  {
-    "id": "1789737076493",
-    "username": "FileManager",
-    "password": "Pass@word0",
-    "roles": [
-      "ProjectManager"
-    ],
-    "createdAt": "2026-09-18T13:11:16.000Z"
   }
 ]

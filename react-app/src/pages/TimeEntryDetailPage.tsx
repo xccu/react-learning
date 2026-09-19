@@ -2,40 +2,45 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import type { RootState, AppDispatch } from '../store'
-import { getEntryById, approveEntry as approveEntryApi, rejectEntry as rejectEntryApi, getEntries } from '../api/timeEntryApi'
-import { approveEntry, rejectEntry, setEntries } from '../store/timesheetSlice'
-import { message } from 'antd'
+import { approveEntryThunk, rejectEntryThunk, fetchEntryById } from '../store/timesheetSlice'
+import { message, Modal, Form, Input } from 'antd'
+import { CheckOutlined, CloseOutlined } from '@ant-design/icons'
 import styles from './TimeEntryDetailPage.module.css'
 
 // 详情页：按路由标识经请求模块加载单条记录，处理加载中与记录不存在状态
 function TimeEntryDetailPage() {
   const { id } = useParams()
   const [error, setError] = useState<string | null>(null)
+  const [rejectModal, setRejectModal] = useState<{ open: boolean; reason: string }>({ open: false, reason: '' })
+  const [rejectForm] = Form.useForm<{ reason: string }>()
   const dispatch = useDispatch<AppDispatch>()
 
   // 从 Redux Store 读取所有工时记录
   const entries = useSelector((state: RootState) => state.timesheet.entries)
+  const loading = useSelector((state: RootState) => state.timesheet.loading)
   const entry = entries.find((e) => e.id === id) ?? null
 
-  // 挂载时如果 Store 中没有该记录，则从 API 加载
+  // 挂载时如果 Store 中没有该记录，则 dispatch fetchEntryById
   useEffect(() => {
     if (!id) return
     if (entry) return
     setError(null)
-    getEntryById(id)
-      .then((data) => {
-        dispatch(setEntries([data]))
-      })
+    dispatch(fetchEntryById(id))
+      .unwrap()
       .catch((err) => setError(err instanceof Error ? err.message : '加载失败'))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id])
+  }, [id, dispatch])
+
+  // 加载中状态
+  if (loading && !entry) {
+    return <p className={styles.status}>加载中...</p>
+  }
 
   // 加载失败或记录不存在时显示提示 + 返回列表入口
   if (error || !entry) {
     return (
       <div className={styles.status}>
         <p className={styles.errorText}>{error === '记录不存在' ? '未找到该工时记录' : '加载失败'}</p>
-        {/* Link：声明式导航，渲染为 <a> 标签但不会整页刷新 */}
         <Link to="/" className={styles.backLink}>
           返回列表
         </Link>
@@ -57,31 +62,35 @@ function TimeEntryDetailPage() {
 
   // 审批通过
   const handleApprove = async () => {
-    if (window.confirm('确定审批通过该记录吗？')) {
-      try {
-        await approveEntryApi(entry.id)
-        message.success('审批通过')
-        const entries = await getEntries()
-        dispatch(setEntries(entries))
-      } catch (err) {
-        message.error(err instanceof Error ? err.message : '审批失败')
-      }
+    try {
+      await dispatch(approveEntryThunk(entry.id)).unwrap()
+      message.success('审批通过')
+    } catch (err) {
+      message.error(err instanceof Error ? err.message : '审批失败')
     }
   }
 
-  // 驳回
-  const handleReject = async () => {
-    const reason = window.prompt('请输入驳回原因：')
-    if (reason) {
-      try {
-        await rejectEntryApi(entry.id, reason)
-        message.success('已驳回')
-        const entries = await getEntries()
-        dispatch(setEntries(entries))
-      } catch (err) {
-        message.error(err instanceof Error ? err.message : '驳回失败')
-      }
+  // 打开驳回 Modal
+  const handleReject = () => {
+    setRejectModal({ open: true, reason: '' })
+    rejectForm.resetFields()
+  }
+
+  // 提交驳回
+  const handleRejectSubmit = async () => {
+    try {
+      const values = await rejectForm.validateFields()
+      await dispatch(rejectEntryThunk({ id: entry.id, reason: values.reason })).unwrap()
+      message.success('已驳回')
+      setRejectModal({ open: false, reason: '' })
+    } catch {
+      // 校验失败不处理
     }
+  }
+
+  // 关闭驳回 Modal
+  const closeRejectModal = () => {
+    setRejectModal({ open: false, reason: '' })
   }
 
   return (
@@ -143,6 +152,27 @@ function TimeEntryDetailPage() {
           返回列表
         </Link>
       </div>
+
+      {/* 驳回 Modal */}
+      <Modal
+        title="驳回"
+        open={rejectModal.open}
+        onOk={handleRejectSubmit}
+        onCancel={closeRejectModal}
+        destroyOnHidden
+        okText="确定"
+        cancelText="取消"
+      >
+        <Form form={rejectForm} layout="vertical">
+          <Form.Item
+            name="reason"
+            label="驳回原因"
+            rules={[{ required: true, message: '请输入驳回原因' }]}
+          >
+            <Input.TextArea placeholder="请输入驳回原因" rows={3} />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   )
 }
