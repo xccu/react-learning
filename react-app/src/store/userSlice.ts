@@ -1,17 +1,6 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
 import type { User, Role, Permission } from '../types/timeEntry'
 import { getUsers as getUsersApi, getUserById as getUserByIdApi, addUser as addUserApi, updateUser as updateUserApi, deleteUser as deleteUserApi, login as loginApi, getRoles as getRolesApi, createRole as createRoleApi, updateRole as updateRoleApi, deleteRole as deleteRoleApi } from '../api/timeEntryApi'
-import { hasPermission as checkPermission, getUserPermissions } from '../api/mockApi'
-
-// 辅助函数：检查用户是否有指定权限
-export function hasPermission(userRoles: string[], permission: Permission): boolean {
-  return checkPermission(userRoles, permission)
-}
-
-// 辅助函数：获取用户的所有权限
-export function getUserPermissionsFromRoles(userRoles: string[]): Permission[] {
-  return getUserPermissions(userRoles)
-}
 
 interface UserState {
   users: User[]

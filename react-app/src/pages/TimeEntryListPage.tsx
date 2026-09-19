@@ -9,9 +9,8 @@ import type { ColumnsType } from 'antd/es/table'
 import Header from '../components/timesheet/Header'
 import Stats from '../components/timesheet/Stats'
 import TimeEntryQueryForm from '../components/timesheet/TimeEntryQueryForm'
-import type { TimeEntry } from '../types/timeEntry'
-import type { TimeEntryQuery } from '../api/mockApi'
-import { addEntries, queryEntries, getEntries } from '../api/timeEntryApi'
+import type { TimeEntry, TimeEntryQuery } from '../types/timeEntry'
+import { addEntries, queryEntries, getEntries, deleteEntry as deleteEntryApi, approveEntry as approveEntryApi, rejectEntry as rejectEntryApi, submitEntry as submitEntryApi } from '../api/timeEntryApi'
 import { exportToExcel, importFromExcel } from '../utils/excel'
 import usePermission from '../hooks/usePermission'
 import styles from './TimeEntryListPage.module.css'
@@ -129,24 +128,30 @@ function TimeEntryListPage() {
     [navigate]
   )
 
-  // 删除按钮：二次确认后 dispatch deleteEntry，并同步本地查询结果
+  // 删除按钮：二次确认后调用 API 删除，并同步本地查询结果
   const handleDelete = useCallback(
     async (id: string) => {
-      dispatch(deleteEntry(id))
-      message.success('删除成功')
-      // 处于查询过滤状态时同步移除已删除记录，保持可见列表一致
-      setFiltered((prev) => {
-        if (!prev) return prev
-        const newFiltered = prev.filter((e) => e.id !== id)
-        // 删除当前页最后一条记录时自动跳转到上一页
-        if (newFiltered.length > 0) {
-          const newTotalPages = Math.ceil(newFiltered.length / pageSize)
-          if (currentPage > newTotalPages) {
-            setCurrentPage(newTotalPages)
+      try {
+        await deleteEntryApi(id)
+        message.success('删除成功')
+        const entries = await getEntries()
+        dispatch(setEntries(entries))
+        // 处于查询过滤状态时同步移除已删除记录，保持可见列表一致
+        setFiltered((prev) => {
+          if (!prev) return prev
+          const newFiltered = prev.filter((e) => e.id !== id)
+          // 删除当前页最后一条记录时自动跳转到上一页
+          if (newFiltered.length > 0) {
+            const newTotalPages = Math.ceil(newFiltered.length / pageSize)
+            if (currentPage > newTotalPages) {
+              setCurrentPage(newTotalPages)
+            }
           }
-        }
-        return newFiltered
-      })
+          return newFiltered
+        })
+      } catch (err) {
+        message.error(err instanceof Error ? err.message : '删除失败')
+      }
     },
     [dispatch, currentPage, pageSize]
   )
@@ -154,8 +159,14 @@ function TimeEntryListPage() {
   // 审批通过
   const handleApprove = useCallback(
     async (id: string) => {
-      dispatch(approveEntry(id))
-      message.success('审批通过')
+      try {
+        await approveEntryApi(id)
+        message.success('审批通过')
+        const entries = await getEntries()
+        dispatch(setEntries(entries))
+      } catch (err) {
+        message.error(err instanceof Error ? err.message : '审批失败')
+      }
     },
     [dispatch]
   )
@@ -171,8 +182,10 @@ function TimeEntryListPage() {
     try {
       const values = await rejectForm.validateFields()
       if (rejectModal.entryId) {
-        dispatch(rejectEntry({ id: rejectModal.entryId, reason: values.reason }))
+        await rejectEntryApi(rejectModal.entryId, values.reason)
         message.success('已驳回')
+        const entries = await getEntries()
+        dispatch(setEntries(entries))
         setRejectModal({ open: false, entryId: null })
       }
     } catch {

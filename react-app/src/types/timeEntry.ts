@@ -81,3 +81,10 @@ export interface UserQuery {
   username?: string
   role?: UserRole | ''
 }
+
+// 工时记录查询条件
+export interface TimeEntryQuery {
+  projectName?: string
+  description?: string
+  approvalStatus?: ApprovalStatus | ''
+}

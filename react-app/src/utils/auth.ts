@@ -46,8 +46,31 @@ export function getPermissions(): string[] {
   }
 }
 
-// 检查是否有指定权限
+// 检查用户是否有指定权限
 export function hasPermission(permission: string): boolean {
   const permissions = getPermissions()
   return permissions.includes(permission)
+}
+
+// 从用户角色和角色列表检查是否有指定权限（roles 参数可从 Redux store 获取）
+export function hasPermissionFromRoles(userRoles: string[], roles: { name: string; permissions: string[] }[], permission: string): boolean {
+  for (const roleName of userRoles) {
+    const role = roles.find((r) => r.name === roleName)
+    if (role && role.permissions.includes(permission)) {
+      return true
+    }
+  }
+  return false
+}
+
+// 从用户角色和角色列表合并获取所有权限
+export function getUserPermissionsFromRoles(userRoles: string[], roles: { name: string; permissions: string[] }[]): string[] {
+  const permissions: string[] = []
+  for (const roleName of userRoles) {
+    const role = roles.find((r) => r.name === roleName)
+    if (role) {
+      permissions.push(...role.permissions)
+    }
+  }
+  return [...new Set(permissions)]
 }

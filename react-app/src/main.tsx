@@ -10,8 +10,6 @@ import zhCN from 'antd/locale/zh_CN'
 // Ant Design 全局样式
 import 'antd/dist/reset.css'
 import './index.css'
-// 引入即注册 mock 适配器：/api/* 请求落入内存数据源，接入真实后端时移除该导入即可
-import './api/mockAdapter'
 import store from './store'
 import App from './App.tsx'
 

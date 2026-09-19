@@ -1,6 +1,6 @@
 // 【Ant Design】表单查询组件：使用 Form.useForm 管理查询条件
 import { Form, Input, Select, Button, Space } from 'antd'
-import type { TimeEntryQuery } from '../../api/mockApi'
+import type { TimeEntryQuery } from '../../types/timeEntry'
 import styles from './TimeEntryQueryForm.module.css'
 
 interface TimeEntryQueryFormProps {

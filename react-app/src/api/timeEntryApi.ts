@@ -1,7 +1,6 @@
-// 【数据请求模块】页面统一经 HTTP 请求实例访问工时数据，签名与 mockApi 保持一致
+// 【数据请求模块】页面统一经 HTTP 请求实例访问工时数据
 import httpClient from './httpClient'
-import type { TimeEntry, Role } from '../types/timeEntry'
-import type { TimeEntryQuery, User, UserQuery } from './mockApi'
+import type { TimeEntry, Role, User, TimeEntryQuery, UserQuery } from '../types/timeEntry'
 
 // 获取所有工时记录
 export async function getEntries(): Promise<TimeEntry[]> {

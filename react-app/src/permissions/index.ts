@@ -2,4 +2,3 @@
 export { default as usePermission } from '../hooks/usePermission'
 export { default as RequirePermission } from '../components/auth/RequirePermission'
 export { PERMISSIONS, PERMISSION_LABELS, ROLE_PERMISSIONS, type Permission, type RoleName, type Role } from '../types/timeEntry'
-export { hasPermission, getUserPermissionsFromRoles as getUserPermissions } from '../store/userSlice'

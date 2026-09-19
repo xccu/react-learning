@@ -7,24 +7,15 @@ from data_loader import load_roles, save_roles
 
 router = APIRouter(prefix="/api/roles", tags=["Role"])
 
-_roles: list[dict] = []
-
-
-def _get_roles():
-    global _roles
-    if not _roles:
-        _roles = load_roles()
-    return _roles
-
 
 @router.get("", response_model=list[RoleResponse])
 def list_roles():
-    return _get_roles()
+    return load_roles()
 
 
 @router.get("/{role_id}", response_model=RoleResponse)
 def get_role(role_id: str):
-    roles = _get_roles()
+    roles = load_roles()
     role = next((r for r in roles if r["id"] == role_id), None)
     if not role:
         raise HTTPException(status_code=404, detail={"message": "角色不存在"})
@@ -33,7 +24,7 @@ def get_role(role_id: str):
 
 @router.post("", response_model=RoleResponse, status_code=201)
 def create_role(role: RoleCreate):
-    roles = _get_roles()
+    roles = load_roles()
     new_role = {
         "id": str(int(time.time() * 1000)),
         "name": role.name,
@@ -46,7 +37,7 @@ def create_role(role: RoleCreate):
 
 @router.put("/{role_id}", response_model=RoleResponse)
 def update_role(role_id: str, updates: RoleUpdate):
-    roles = _get_roles()
+    roles = load_roles()
     role = next((r for r in roles if r["id"] == role_id), None)
     if not role:
         raise HTTPException(status_code=404, detail={"message": "角色不存在"})
@@ -59,7 +50,7 @@ def update_role(role_id: str, updates: RoleUpdate):
 
 @router.delete("/{role_id}")
 def delete_role(role_id: str):
-    roles = _get_roles()
+    roles = load_roles()
     role = next((r for r in roles if r["id"] == role_id), None)
     if not role:
         raise HTTPException(status_code=404, detail={"message": "角色不存在"})

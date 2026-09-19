@@ -12,8 +12,9 @@
     "projectName": "项目 A",
     "description": "开发用户登录功能",
     "hours": 5,
-    "approvalStatus": "待审批",
-    "createdAt": "2026-09-14T22:00:00.000Z"
+    "approvalStatus": "已驳回",
+    "createdAt": "2026-09-14T22:00:00.000Z",
+    "rejectReason": "念头不通达"
   },
   {
     "id": "3",
@@ -23,5 +24,37 @@
     "approvalStatus": "已驳回",
     "rejectReason": "工时填写不规范",
     "createdAt": "2026-09-14T10:00:00.000Z"
+  },
+  {
+    "id": "1789725679830",
+    "projectName": "123",
+    "description": "123",
+    "hours": 1.0,
+    "approvalStatus": "已通过",
+    "createdAt": "2026-09-18T10:01:19.000Z"
+  },
+  {
+    "id": "1789743223949",
+    "projectName": "React 学习",
+    "description": "学习 Hooks",
+    "hours": 3.0,
+    "approvalStatus": "已通过",
+    "createdAt": "2026-09-18T14:53:43.000Z"
+  },
+  {
+    "id": "1789743223952",
+    "projectName": "项目 A",
+    "description": "开发功能",
+    "hours": 5.0,
+    "approvalStatus": "待审批",
+    "createdAt": "2026-09-18T14:53:43.000Z"
+  },
+  {
+    "id": "1789743223976",
+    "projectName": "代码审查",
+    "description": "审查 PR",
+    "hours": 2.0,
+    "approvalStatus": "已驳回",
+    "createdAt": "2026-09-18T14:53:43.000Z"
   }
 ]

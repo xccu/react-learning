@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import type { RootState, AppDispatch } from '../store'
-import { addEntry, updateEntry, deleteEntry } from '../store/timesheetSlice'
+import { addEntry, updateEntry, deleteEntry, setEntries } from '../store/timesheetSlice'
+import { addEntry as addEntryApi, updateEntry as updateEntryApi, deleteEntry as deleteEntryApi, getEntries } from '../api/timeEntryApi'
+import { message } from 'antd'
 import Header from '../components/timesheet/Header'
 import TimeEntryForm from '../components/timesheet/TimeEntryForm'
 import TimeEntryList from '../components/timesheet/TimeEntryList'
@@ -20,13 +22,22 @@ function TimeSheetPage() {
   const handleSubmit = async (
     entry: Omit<TimeEntry, 'id' | 'createdAt'>
   ) => {
-    if (editingEntry) {
-      // 编辑模式：dispatch updateEntry
-      dispatch(updateEntry({ ...editingEntry, ...entry }))
-      setEditingEntry(null)
-    } else {
-      // 新增模式：dispatch addEntry
-      dispatch(addEntry({ ...entry, id: Date.now().toString(), createdAt: new Date().toISOString() }))
+    try {
+      if (editingEntry) {
+        // 编辑模式：调用 API
+        await updateEntryApi(editingEntry.id, { ...entry, hours: Number(entry.hours) })
+        message.success('更新成功')
+        setEditingEntry(null)
+      } else {
+        // 新增模式：调用 API
+        await addEntryApi({ ...entry, hours: Number(entry.hours), approvalStatus: '待审批' })
+        message.success('新增成功')
+      }
+      // 刷新列表
+      const entries = await getEntries()
+      dispatch(setEntries(entries))
+    } catch (err) {
+      message.error(err instanceof Error ? err.message : '操作失败')
     }
   }
 
@@ -42,7 +53,14 @@ function TimeSheetPage() {
 
   // 处理删除
   const handleDelete = async (id: string) => {
-    dispatch(deleteEntry(id))
+    try {
+      await deleteEntryApi(id)
+      message.success('删除成功')
+      const entries = await getEntries()
+      dispatch(setEntries(entries))
+    } catch (err) {
+      message.error(err instanceof Error ? err.message : '删除失败')
+    }
   }
 
   // 计算总工时

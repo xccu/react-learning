@@ -7,22 +7,13 @@ from data_loader import load_users, save_users, load_roles
 
 router = APIRouter(prefix="/api/users", tags=["User"])
 
-_users: list[dict] = []
-
-
-def _get_users():
-    global _users
-    if not _users:
-        _users = load_users()
-    return _users
-
 
 @router.get("", response_model=list[UserListResponse])
 def list_users(
     username: Optional[str] = Query(None),
     role: Optional[str] = Query(""),
 ):
-    users = _get_users()
+    users = load_users()
     result = users[:]
     if username:
         result = [u for u in result if username.lower() in u["username"].lower()]
@@ -33,7 +24,7 @@ def list_users(
 
 @router.get("/{user_id}", response_model=UserListResponse)
 def get_user(user_id: str):
-    users = _get_users()
+    users = load_users()
     user = next((u for u in users if u["id"] == user_id), None)
     if not user:
         raise HTTPException(status_code=404, detail={"message": "用户不存在"})
@@ -42,7 +33,7 @@ def get_user(user_id: str):
 
 @router.post("", response_model=UserResponse, status_code=201)
 def create_user(user: UserCreate):
-    users = _get_users()
+    users = load_users()
     new_user = {
         "id": str(int(time.time() * 1000)),
         "username": user.username,
@@ -57,7 +48,7 @@ def create_user(user: UserCreate):
 
 @router.put("/{user_id}", response_model=UserResponse)
 def update_user(user_id: str, updates: UserUpdate):
-    users = _get_users()
+    users = load_users()
     user = next((u for u in users if u["id"] == user_id), None)
     if not user:
         raise HTTPException(status_code=404, detail={"message": "用户不存在"})
@@ -70,7 +61,7 @@ def update_user(user_id: str, updates: UserUpdate):
 
 @router.delete("/{user_id}")
 def delete_user(user_id: str):
-    users = _get_users()
+    users = load_users()
     user_index = next((i for i, u in enumerate(users) if u["id"] == user_id), None)
     if user_index is None:
         raise HTTPException(status_code=404, detail={"message": "用户不存在"})
@@ -81,7 +72,7 @@ def delete_user(user_id: str):
 
 @router.post("/login", response_model=UserLoginResponse, status_code=200)
 def login(user_login: UserLogin):
-    users = _get_users()
+    users = load_users()
     user = next((u for u in users if u["username"] == user_login.username and u["password"] == user_login.password), None)
     if not user:
         raise HTTPException(status_code=401, detail={"message": "用户名或密码错误"})

@@ -2,16 +2,42 @@
   {
     "id": "1",
     "name": "Administrator",
-    "permissions": ["TimeSheet.Read", "User.Read", "User.Write", "Role.Read", "Role.Write"]
+    "permissions": [
+      "TimeSheet.Read",
+      "User.Read",
+      "User.Write",
+      "Role.Read",
+      "Role.Write"
+    ]
   },
   {
     "id": "2",
     "name": "ProjectManager",
-    "permissions": ["TimeSheet.Read", "TimeSheet.Write", "TimeSheet.Export", "TimeSheet.Import", "TimeSheet.approval", "User.Read", "User.Write"]
+    "permissions": [
+      "TimeSheet.Read",
+      "TimeSheet.Write",
+      "TimeSheet.Export",
+      "TimeSheet.Import",
+      "TimeSheet.approval",
+      "User.Read",
+      "User.Write"
+    ]
   },
   {
     "id": "3",
     "name": "User",
-    "permissions": ["TimeSheet.Read", "TimeSheet.Write"]
+    "permissions": [
+      "TimeSheet.Read",
+      "TimeSheet.Write"
+    ]
+  },
+  {
+    "id": "1789736432980",
+    "name": "FileManager",
+    "permissions": [
+      "TimeSheet.Read",
+      "TimeSheet.Export",
+      "TimeSheet.Import"
+    ]
   }
 ]

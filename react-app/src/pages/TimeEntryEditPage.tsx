@@ -3,10 +3,11 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import type { RootState, AppDispatch } from '../store'
-import { getEntryById } from '../api/timeEntryApi'
+import type { TimeEntry } from '../types/timeEntry'
+import { getEntryById, updateEntry as updateEntryApi, submitEntry as submitEntryApi, getEntries } from '../api/timeEntryApi'
 import { updateEntry, submitEntry, setEntries } from '../store/timesheetSlice'
 import TimeEntryForm from '../components/timesheet/TimeEntryForm'
-// TimeEntry type not needed - using store data
+import { message } from 'antd'
 import styles from './TimeEntryEditPage.module.css'
 
 // 编辑页：按路由标识经请求模块加载记录并预填表单，处理加载中与记录不存在状态
@@ -45,16 +46,21 @@ function TimeEntryEditPage() {
     )
   }
 
-  // 提交修改：dispatch updateEntry 后返回列表
+  // 提交修改：调用 API 后刷新列表并返回
   const handleSubmit = async (data: Omit<TimeEntry, 'id' | 'createdAt'>) => {
-    const isRejected = entry.approvalStatus === '已驳回'
-    if (isRejected) {
-      dispatch(submitEntry(entry.id))
+    try {
+      const isRejected = entry.approvalStatus === '已驳回'
+      if (isRejected) {
+        await submitEntryApi(entry.id)
+      }
+      const { approvalStatus: _, ...updateData } = data
+      await updateEntryApi(entry.id, { ...updateData, hours: Number(data.hours), approvalStatus: isRejected ? '待审批' : entry.approvalStatus, ...(isRejected && { rejectReason: undefined }) })
+      const entries = await getEntries()
+      dispatch(setEntries(entries))
+      navigate('/')
+    } catch (err) {
+      message.error(err instanceof Error ? err.message : '更新失败')
     }
-    const _approvalStatus = data.approvalStatus
-    const { approvalStatus: _, ...updateData } = data
-    dispatch(updateEntry({ ...entry, ...updateData, hours: Number(data.hours), approvalStatus: isRejected ? '待审批' : entry.approvalStatus, ...(isRejected && { rejectReason: undefined }) }))
-    navigate('/')
   }
 
   return (

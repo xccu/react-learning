@@ -58,6 +58,7 @@ class UserListResponse(BaseModel):
     id: str
     username: str
     password: str
+    roles: list[str]
     createdAt: str
 
 

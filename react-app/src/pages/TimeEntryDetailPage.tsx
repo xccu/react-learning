@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import type { RootState, AppDispatch } from '../store'
-import { getEntryById } from '../api/timeEntryApi'
+import { getEntryById, approveEntry as approveEntryApi, rejectEntry as rejectEntryApi, getEntries } from '../api/timeEntryApi'
 import { approveEntry, rejectEntry, setEntries } from '../store/timesheetSlice'
-// TimeEntry type not needed - using store data
+import { message } from 'antd'
 import styles from './TimeEntryDetailPage.module.css'
 
 // 详情页：按路由标识经请求模块加载单条记录，处理加载中与记录不存在状态
@@ -56,17 +56,31 @@ function TimeEntryDetailPage() {
   }
 
   // 审批通过
-  const handleApprove = () => {
+  const handleApprove = async () => {
     if (window.confirm('确定审批通过该记录吗？')) {
-      dispatch(approveEntry(entry.id))
+      try {
+        await approveEntryApi(entry.id)
+        message.success('审批通过')
+        const entries = await getEntries()
+        dispatch(setEntries(entries))
+      } catch (err) {
+        message.error(err instanceof Error ? err.message : '审批失败')
+      }
     }
   }
 
   // 驳回
-  const handleReject = () => {
+  const handleReject = async () => {
     const reason = window.prompt('请输入驳回原因：')
     if (reason) {
-      dispatch(rejectEntry({ id: entry.id, reason }))
+      try {
+        await rejectEntryApi(entry.id, reason)
+        message.success('已驳回')
+        const entries = await getEntries()
+        dispatch(setEntries(entries))
+      } catch (err) {
+        message.error(err instanceof Error ? err.message : '驳回失败')
+      }
     }
   }
 

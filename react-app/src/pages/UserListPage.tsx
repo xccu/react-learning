@@ -158,7 +158,7 @@ function UserListPage() {
   return (
     <div>
       <Header title="用户管理" icon={<UserOutlined />} />
-      <UserQueryForm onQuery={handleQuery} onCreate={hasWritePermission ? handleCreate : (() => { })} showCreate={hasWritePermission} />
+      <UserQueryForm onQuery={handleQuery} onCreate={hasWritePermission ? handleCreate : (() => { })} />
 
       {loading ? (
         <p className={styles.status}>加载中...</p>
