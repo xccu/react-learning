@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
 import type { User, Role, Permission } from '../types/timeEntry'
-import { getUsers as getUsersApi, getUserById as getUserByIdApi, addUser as addUserApi, updateUser as updateUserApi, deleteUser as deleteUserApi, login as loginApi, getRoles as getRolesApi, createRole as createRoleApi, updateRole as updateRoleApi, deleteRole as deleteRoleApi } from '../api/timeEntryApi'
+import { getUsers as getUsersApi, getUserById as getUserByIdApi, addUser as addUserApi, updateUser as updateUserApi, deleteUser as deleteUserApi, login as loginApi } from '../api/userApi'
+import { getRoles as getRolesApi, createRole as createRoleApi, updateRole as updateRoleApi, deleteRole as deleteRoleApi } from '../api/roleApi'
 
 interface UserState {
   users: User[]

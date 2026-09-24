@@ -9,7 +9,7 @@ import type { ColumnsType } from 'antd/es/table'
 import Header from '../components/timesheet/Header'
 import UserQueryForm from '../components/timesheet/UserQueryForm'
 import type { User } from '../types/timeEntry'
-import { queryUsers } from '../api/timeEntryApi'
+import { queryUsers } from '../api/userApi'
 import usePermission from '../hooks/usePermission'
 import styles from './UserListPage.module.css'
 

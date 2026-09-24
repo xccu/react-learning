@@ -1,6 +1,6 @@
-// 【数据请求模块】页面统一经 HTTP 请求实例访问工时数据
+// 【工时记录 API 模块】页面统一经 HTTP 请求实例访问工时数据
 import httpClient from './httpClient'
-import type { TimeEntry, Role, User, TimeEntryQuery, UserQuery } from '../types/timeEntry'
+import type { TimeEntry, TimeEntryQuery } from '../types/timeEntry'
 
 // 获取所有工时记录
 export async function getEntries(): Promise<TimeEntry[]> {
@@ -62,78 +62,4 @@ export async function approveEntry(id: string): Promise<TimeEntry> {
 export async function rejectEntry(id: string, reason: string): Promise<TimeEntry> {
   const { data } = await httpClient.put<TimeEntry>(`/time-entries/${id}/reject`, { reason })
   return data
-}
-
-// ========== 用户模块 ==========
-
-// 获取所有用户
-export async function getUsers(): Promise<User[]> {
-  const { data } = await httpClient.get<User[]>('/users')
-  return data
-}
-
-// 按查询条件过滤用户
-export async function queryUsers(query: UserQuery): Promise<User[]> {
-  const { data } = await httpClient.get<User[]>('/users', { params: query })
-  return data
-}
-
-// 获取单个用户
-export async function getUserById(id: string): Promise<User> {
-  const { data } = await httpClient.get<User>(`/users/${id}`)
-  return data
-}
-
-// 新增用户
-export async function addUser(user: Omit<User, 'id' | 'createdAt'>): Promise<User> {
-  const { data } = await httpClient.post<User>('/users', user)
-  return data
-}
-
-// 更新用户
-export async function updateUser(id: string, updates: Partial<Omit<User, 'id' | 'createdAt' | 'password'>>): Promise<User> {
-  const { data } = await httpClient.put<User>(`/users/${id}`, updates)
-  return data
-}
-
-// 删除用户
-export async function deleteUser(id: string): Promise<void> {
-  await httpClient.delete(`/users/${id}`)
-}
-
-// 用户登录
-export async function login(username: string, password: string): Promise<User> {
-  const { data } = await httpClient.post<User>('/users/login', { username, password })
-  return data
-}
-
-// ========== 角色模块 ==========
-
-// 获取所有角色
-export async function getRoles(): Promise<Role[]> {
-  const { data } = await httpClient.get<Role[]>('/roles')
-  return data
-}
-
-// 获取单个角色
-export async function getRoleById(id: string): Promise<Role> {
-  const { data } = await httpClient.get<Role>(`/roles/${id}`)
-  return data
-}
-
-// 创建角色
-export async function createRole(role: Omit<Role, 'id'>): Promise<Role> {
-  const { data } = await httpClient.post<Role>('/roles', role)
-  return data
-}
-
-// 更新角色
-export async function updateRole(id: string, updates: Partial<Omit<Role, 'id'>>): Promise<Role> {
-  const { data } = await httpClient.put<Role>(`/roles/${id}`, updates)
-  return data
-}
-
-// 删除角色
-export async function deleteRole(id: string): Promise<void> {
-  await httpClient.delete(`/roles/${id}`)
 }
